@@ -15,7 +15,6 @@ import {
 
 const STATUS_COLORS = {
   Pending: '#4F46E5',
-  Ongoing: '#F59E0B',
   Completed: '#16A34A',
 };
 
@@ -37,7 +36,7 @@ function countBy(assignments, key, order) {
 
 export default function Insights({ assignments }) {
   const statusData = useMemo(
-    () => countBy(assignments, 'status', ['Pending', 'Ongoing', 'Completed']),
+    () => countBy(assignments, 'status', ['Pending', 'Completed']),
     [assignments]
   );
   const priorityData = useMemo(
@@ -49,7 +48,7 @@ export default function Insights({ assignments }) {
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-lg dark:border-gray-800 dark:bg-gray-950">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-extrabold text-gray-900">Status</h2>
           <p className="text-xs font-semibold text-gray-600">Distribution</p>
@@ -68,14 +67,14 @@ export default function Insights({ assignments }) {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 text-sm text-gray-600">
+            <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
               Add assignments to see insights.
             </div>
           )}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-lg dark:border-gray-800 dark:bg-gray-950">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-extrabold text-gray-900">Priority</h2>
           <p className="text-xs font-semibold text-gray-600">Counts</p>
@@ -96,7 +95,7 @@ export default function Insights({ assignments }) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 text-sm text-gray-600">
+            <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
               Add assignments to see insights.
             </div>
           )}
@@ -105,4 +104,3 @@ export default function Insights({ assignments }) {
     </div>
   );
 }
-

@@ -3,7 +3,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { Plus, Save, X } from 'lucide-react';
 
 const inputClassName =
-  'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500';
+  'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900 outline-none transition focus:ring-2 focus:ring-blue-800 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100';
 
 export default function AssignmentForm({ onSubmit, defaultValues, isEditing, onCancel }) {
   const {
@@ -30,7 +30,7 @@ export default function AssignmentForm({ onSubmit, defaultValues, isEditing, onC
     >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
-          <label className="block text-sm font-semibold text-gray-800">Title</label>
+          <label className="block text-sm font-extrabold text-gray-800 dark:text-gray-200">Title</label>
           <input
             {...register('title', { required: true })}
             className={inputClassName}
@@ -40,12 +40,12 @@ export default function AssignmentForm({ onSubmit, defaultValues, isEditing, onC
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-800">Subject</label>
+          <label className="block text-sm font-extrabold text-gray-800 dark:text-gray-200">Subject</label>
           <input {...register('subject')} className={inputClassName} placeholder="e.g., Algebra" />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-800">Deadline</label>
+          <label className="block text-sm font-extrabold text-gray-800 dark:text-gray-200">Deadline</label>
           <input
             type="datetime-local"
             {...register('deadline', { required: true })}
@@ -55,7 +55,7 @@ export default function AssignmentForm({ onSubmit, defaultValues, isEditing, onC
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-800">Priority</label>
+          <label className="block text-sm font-extrabold text-gray-800 dark:text-gray-200">Priority</label>
           <select {...register('priority', { required: true })} className={inputClassName}>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
@@ -64,16 +64,15 @@ export default function AssignmentForm({ onSubmit, defaultValues, isEditing, onC
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-800">Status</label>
+          <label className="block text-sm font-extrabold text-gray-800 dark:text-gray-200">Status</label>
           <select {...register('status', { required: true })} className={inputClassName}>
             <option value="Pending">Pending</option>
-            <option value="Ongoing">Ongoing</option>
             <option value="Completed">Completed</option>
           </select>
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-semibold text-gray-800">Description</label>
+          <label className="block text-sm font-extrabold text-gray-800 dark:text-gray-200">Description</label>
           <textarea
             {...register('description')}
             className={`${inputClassName} min-h-[80px]`}
@@ -82,7 +81,7 @@ export default function AssignmentForm({ onSubmit, defaultValues, isEditing, onC
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-100 bg-indigo-50/40 p-4">
+      <div className="rounded-2xl border border-gray-100 bg-blue-50/40 p-4 dark:border-gray-800 dark:bg-blue-950/10">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-gray-900">Reminder</p>
@@ -113,7 +112,7 @@ export default function AssignmentForm({ onSubmit, defaultValues, isEditing, onC
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-2xl bg-blue-800 px-4 py-2 text-sm font-extrabold text-white shadow-sm transition hover:bg-blue-900 hover:scale-[1.01] disabled:opacity-60"
         >
           {isEditing ? <Save size={18} /> : <Plus size={18} />}
           {isEditing ? 'Save Changes' : 'Add Assignment'}
@@ -122,7 +121,7 @@ export default function AssignmentForm({ onSubmit, defaultValues, isEditing, onC
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-extrabold text-gray-800 transition hover:bg-gray-50 hover:scale-[1.01] dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900"
           >
             <X size={18} /> Cancel
           </button>

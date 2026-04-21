@@ -8,13 +8,15 @@ const PREFERENCES_KEY = 'sars.assignments.v1';
 let nativeDbPromise;
 
 function normalizeAssignmentInput(data) {
+  const rawStatus = data.status || 'Pending';
+  const status = rawStatus === 'Completed' ? 'Completed' : 'Pending';
   return {
     title: String(data.title || '').trim(),
     subject: String(data.subject || '').trim(),
     description: String(data.description || '').trim(),
     deadline: data.deadline ? String(data.deadline) : null,
     priority: data.priority || 'Medium',
-    status: data.status || 'Pending',
+    status,
     reminderEnabled: Boolean(data.reminderEnabled),
     remindBeforeMinutes: Number.isFinite(Number(data.remindBeforeMinutes))
       ? Number(data.remindBeforeMinutes)
