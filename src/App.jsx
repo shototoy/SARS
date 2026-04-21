@@ -3,19 +3,20 @@ import AssignmentList from './components/AssignmentList';
 import AssignmentWizard from './components/AssignmentWizard';
 import Dashboard from './components/Dashboard';
 import CalendarView from './components/CalendarView';
-import Insights from './components/Insights';
+import DashboardInsights from './components/DashboardInsights';
 import { getAssignments, addAssignment, updateAssignment, deleteAssignment } from './lib/db';
 import { syncAssignmentReminders } from './lib/reminders';
 import AppHeader from './components/AppHeader';
 import Sidebar from './components/Sidebar';
 import FooterNav from './components/FooterNav';
 import { PlusCircle } from 'lucide-react';
+import Login from './components/Login';
+import { getCurrentUser, logout } from './lib/auth';
 
 const TAB_ORDER = {
   assignments: 0,
   home: 1,
   calendar: 2,
-  insights: 3,
 };
 
 function App() {
@@ -28,6 +29,8 @@ function App() {
   const [editingAssignment, setEditingAssignment] = useState(null);
   const transitionKeyRef = useRef(0);
   const swipeRef = useRef(null);
+  const [user, setUser] = useState(null);
+  const [chromePx, setChromePx] = useState({ header: 80, footer: 96 });
 
   function goAssignmentsList() {
     navigateTab('assignments');
@@ -55,7 +58,7 @@ function App() {
 
     window.setTimeout(() => {
       setTabTransition((t) => (t && t.key === key ? null : t));
-    }, 1000);
+    }, 800);
   }
 
   async function refresh() {
@@ -65,6 +68,8 @@ function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const sessionUser = await getCurrentUser();
+      if (!cancelled) setUser(sessionUser);
       const list = await getAssignments();
       if (!cancelled) setAssignments(list);
     })();
@@ -72,6 +77,26 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    function measure() {
+      const headerEl = document.getElementById('app-header');
+      const footerEl = document.getElementById('app-footer');
+      if (!headerEl || !footerEl) return;
+      const header = Math.round(headerEl.getBoundingClientRect().height);
+      const footer = Math.round(footerEl.getBoundingClientRect().height);
+      setChromePx((prev) => (prev.header === header && prev.footer === footer ? prev : { header, footer }));
+    }
+
+    measure();
+    window.addEventListener('resize', measure);
+    window.visualViewport?.addEventListener('resize', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.visualViewport?.removeEventListener('resize', measure);
+    };
+  }, [user]);
 
   useEffect(() => {
     const previousIds = previousAssignmentIdsRef.current;
@@ -111,45 +136,26 @@ function App() {
       return 'Assignments';
     }
     if (tab === 'calendar') return 'Calendar';
-    if (tab === 'insights') return 'Insights';
     return 'SARS Dashboard';
   }, [assignmentsView, tab]);
 
   function renderTabContent(activeTab) {
     if (activeTab === 'home') {
       return (
-        <div className="space-y-6">
+        <div className="flex h-full flex-col gap-4 py-2">
           <Dashboard assignments={assignments} onGoAssignments={goAssignmentsList} />
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-lg dark:border-gray-800 dark:bg-gray-950">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100">Insights</h2>
-              <button
-                onClick={() => navigateTab('insights')}
-                className="text-xs font-extrabold text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100"
-              >
-                View more
-              </button>
-            </div>
-            <div className="mt-4">
-              <Insights assignments={assignments} />
-            </div>
+          <div className="flex-1 min-h-0 rounded-2xl border border-gray-100 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-gray-950">
+            <DashboardInsights assignments={assignments} />
           </div>
         </div>
       );
     }
 
     if (activeTab === 'calendar') return <CalendarView assignments={assignments} />;
-    if (activeTab === 'insights') {
-      return (
-        <div className="h-[calc(100vh-192px)] overflow-hidden">
-          <Insights assignments={assignments} fullHeight />
-        </div>
-      );
-    }
 
     if (activeTab === 'assignments') {
       return (
-        <section className="space-y-5">
+        <section className="flex h-full flex-col gap-3">
           {assignmentsView === 'list' ? (
             <>
               <div className="flex items-center justify-between">
@@ -173,28 +179,36 @@ function App() {
                 </button>
               </div>
 
-              <AssignmentList assignments={assignments} onEdit={handleEdit} onDelete={handleDelete} />
+              <div className="min-h-0 flex-1 overflow-auto pb-2">
+                <AssignmentList assignments={assignments} onEdit={handleEdit} onDelete={handleDelete} />
+              </div>
             </>
           ) : (
-            <AssignmentWizard
-              mode={assignmentsView === 'edit' ? 'edit' : 'add'}
-              initialValues={
-                assignmentsView === 'edit' && editingAssignment
-                  ? editingAssignment
-                  : { priority: 'Medium', status: 'Pending', reminderEnabled: false, remindBeforeMinutes: 1440 }
-              }
-              onCancel={() => {
-                setAssignmentsView('list');
-                setEditingAssignment(null);
-              }}
-              onSubmit={handleAdd}
-            />
+            <div className="min-h-0 flex-1 overflow-auto pb-2">
+              <AssignmentWizard
+                mode={assignmentsView === 'edit' ? 'edit' : 'add'}
+                initialValues={
+                  assignmentsView === 'edit' && editingAssignment
+                    ? editingAssignment
+                    : { priority: 'Medium', status: 'Pending', reminderEnabled: false, remindBeforeMinutes: 1440 }
+                }
+                onCancel={() => {
+                  setAssignmentsView('list');
+                  setEditingAssignment(null);
+                }}
+                onSubmit={handleAdd}
+              />
+            </div>
           )}
         </section>
       );
     }
 
     return null;
+  }
+
+  if (!user) {
+    return <Login onAuthed={(u) => setUser(u)} />;
   }
 
   return (
@@ -210,6 +224,11 @@ function App() {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         activeTab={tab}
+        onLogout={async () => {
+          await logout();
+          setUser(null);
+          setSidebarOpen(false);
+        }}
         onSelectTab={(next) => {
           navigateTab(next);
           if (next === 'assignments') {
@@ -219,9 +238,12 @@ function App() {
         }}
       />
 
-      <main className="mx-auto w-full max-w-4xl px-4 pb-28 pt-20 md:px-6">
+      <main
+        className="mx-auto h-[100dvh] w-full max-w-4xl overflow-hidden px-4 md:px-6"
+        style={{ paddingTop: chromePx.header, paddingBottom: chromePx.footer }}
+      >
         <div
-          className="relative overflow-hidden"
+          className="relative h-full overflow-hidden"
           onPointerDown={(e) => {
             if (assignmentsView !== 'list' && tab === 'assignments') return;
             if (e.pointerType === 'mouse') return;
@@ -265,30 +287,32 @@ function App() {
           {tabTransition ? (
             <>
               <div
-                className={`absolute inset-0 will-change-transform transition-transform duration-[1000ms] ease-in-out ${
+                className={`absolute inset-0 will-change-transform transform-gpu transition-all duration-[900ms] ease-in-out ${
                   tabTransition.phase === 'animate'
                     ? tabTransition.dir === 'from-left'
                       ? 'translate-x-full'
                       : '-translate-x-full'
                     : 'translate-x-0'
-                }`}
+                } ${tabTransition.phase === 'animate' ? 'blur-[3px] opacity-95' : 'blur-0 opacity-100'}`}
               >
-                {renderTabContent(tabTransition.from)}
+                <div className="h-full">{renderTabContent(tabTransition.from)}</div>
               </div>
               <div
-                className={`relative will-change-transform transition-transform duration-[1000ms] ease-in-out ${
+                className={`relative will-change-transform transform-gpu transition-all duration-[900ms] ease-in-out ${
                   tabTransition.phase === 'animate'
                     ? 'translate-x-0'
                     : tabTransition.dir === 'from-left'
                       ? '-translate-x-full'
                       : 'translate-x-full'
-                }`}
+                } ${tabTransition.phase === 'animate' ? 'blur-0 opacity-100' : 'blur-[3px] opacity-95'}`}
               >
-                {renderTabContent(tabTransition.to)}
+                <div className="h-full">{renderTabContent(tabTransition.to)}</div>
               </div>
             </>
           ) : (
-            <div className="relative">{renderTabContent(tab)}</div>
+            <div className="relative h-full">
+              <div className="h-full">{renderTabContent(tab)}</div>
+            </div>
           )}
         </div>
       </main>

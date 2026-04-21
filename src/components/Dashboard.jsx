@@ -118,11 +118,7 @@ export default function Dashboard({ assignments, onGoAssignments }) {
     const overdue = assignments.filter(isOverdue).length;
     const dueSoon = assignments.filter((a) => isDueSoon(a, 24)).length;
 
-    const upcoming = assignments
-      .filter((a) => a.deadline && dayjs(a.deadline).isValid() && dayjs(a.deadline).isAfter(dayjs()))
-      .slice(0, 5);
-
-    return { total, completed, pending, overdue, dueSoon, upcoming };
+    return { total, completed, pending, overdue, dueSoon };
   }, [assignments]);
 
   const statusPill = useMemo(() => {
@@ -134,86 +130,62 @@ export default function Dashboard({ assignments, onGoAssignments }) {
   }, [stats.dueSoon, stats.overdue, stats.pending, stats.total]);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-lg dark:border-gray-800 dark:bg-gray-950">
+    <div className="space-y-3.5">
+      <div className="grid grid-cols-4 gap-1.5">
+        <div
+          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          aria-label={`Total assignments: ${stats.total}`}
+        >
+          <span className="rounded-xl bg-blue-50 p-1.5 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
+            <ListChecks size={18} />
+          </span>
+          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{stats.total}</span>
+        </div>
+
+        <div
+          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          aria-label={`Completed assignments: ${stats.completed}`}
+        >
+          <span className="rounded-xl bg-green-50 p-1.5 text-green-700 dark:bg-green-950/30 dark:text-green-200">
+            <CheckCircle2 size={18} />
+          </span>
+          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{stats.completed}</span>
+        </div>
+
+        <div
+          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          aria-label={`Due within 24 hours: ${stats.dueSoon}`}
+        >
+          <span className="rounded-xl bg-orange-50 p-1.5 text-orange-700 dark:bg-orange-950/30 dark:text-orange-200">
+            <CalendarClock size={18} />
+          </span>
+          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{stats.dueSoon}</span>
+        </div>
+
+        <div
+          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          aria-label={`Overdue assignments: ${stats.overdue}`}
+        >
+          <span className="rounded-xl bg-red-50 p-1.5 text-red-700 dark:bg-red-950/30 dark:text-red-200">
+            <AlertTriangle size={18} />
+          </span>
+          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{stats.overdue}</span>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-gray-950">
         <p className="text-sm font-extrabold tracking-tight text-blue-800 dark:text-blue-200">Your dashboard</p>
-        <div className="mt-4">
+        <div className="mt-2">
           <ProgressBar assignments={assignments} onGoAssignments={onGoAssignments} />
         </div>
-        <div className="mt-3">
+        <div className="mt-2">
           <span
-            className={`inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-extrabold ring-1 ${statusPill.cls}`}
+            className={`inline-flex items-center gap-2 rounded-2xl px-3 py-1.5 text-sm font-extrabold ring-1 ${statusPill.cls}`}
           >
             <Sparkles size={18} />
             {statusPill.text}
           </span>
         </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-2">
-        <div
-          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
-          aria-label={`Total assignments: ${stats.total}`}
-        >
-          <span className="rounded-xl bg-blue-50 p-2 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
-            <ListChecks size={16} />
-          </span>
-          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.total}</span>
-        </div>
-
-        <div
-          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
-          aria-label={`Completed assignments: ${stats.completed}`}
-        >
-          <span className="rounded-xl bg-green-50 p-2 text-green-700 dark:bg-green-950/30 dark:text-green-200">
-            <CheckCircle2 size={16} />
-          </span>
-          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.completed}</span>
-        </div>
-
-        <div
-          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
-          aria-label={`Due within 24 hours: ${stats.dueSoon}`}
-        >
-          <span className="rounded-xl bg-orange-50 p-2 text-orange-700 dark:bg-orange-950/30 dark:text-orange-200">
-            <CalendarClock size={16} />
-          </span>
-          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.dueSoon}</span>
-        </div>
-
-        <div
-          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
-          aria-label={`Overdue assignments: ${stats.overdue}`}
-        >
-          <span className="rounded-xl bg-red-50 p-2 text-red-700 dark:bg-red-950/30 dark:text-red-200">
-            <AlertTriangle size={16} />
-          </span>
-          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.overdue}</span>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-lg dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-extrabold text-gray-900">Upcoming</h2>
-          <p className="text-xs font-semibold text-gray-600">Next 5</p>
-        </div>
-        {stats.upcoming.length ? (
-          <div className="mt-3 space-y-2">
-            {stats.upcoming.map((a) => (
-              <div
-                key={a.id}
-                className="flex flex-col gap-1 rounded-2xl border border-gray-100 bg-white p-3 md:flex-row md:items-center md:justify-between dark:border-gray-800 dark:bg-gray-950"
-              >
-                <p className="text-sm font-extrabold text-gray-900 dark:text-gray-100">{a.title}</p>
-                <p className="text-xs font-semibold italic text-gray-600 dark:text-gray-400">
-                  {dayjs(a.deadline).format('MMM D • h:mm A')}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-gray-600">No upcoming deadlines yet.</p>
-        )}
       </div>
     </div>
   );

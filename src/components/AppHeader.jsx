@@ -57,8 +57,11 @@ export default function AppHeader({ title, assignments, onOpenSidebar, onGoAssig
   const shouldPulse = items.length > 0;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-20 border-b border-gray-200 bg-white/80 backdrop-blur dark:border-gray-800 dark:bg-gray-950/70">
-      <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-4 py-3 md:px-6">
+    <header
+      id="app-header"
+      className="fixed top-0 left-0 right-0 z-20 border-b border-gray-200 bg-white/80 backdrop-blur dark:border-gray-800 dark:bg-gray-950/70"
+    >
+      <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-4 pb-3 pt-5 md:px-6">
         <button
           onClick={onOpenSidebar}
           className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-900 shadow-sm transition hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"

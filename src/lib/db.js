@@ -66,6 +66,34 @@ async function migrateAssignmentsTable(db) {
   await maybeAddColumn('reminderId', 'INTEGER');
 }
 
+async function ensureUsersTable(db) {
+  await db.execute(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT,
+    pin TEXT,
+    createdAt TEXT
+  )`);
+
+  try {
+    await db.execute('ALTER TABLE users ADD COLUMN password TEXT');
+  } catch {
+    // ignore
+  }
+
+  try {
+    await db.execute('ALTER TABLE users ADD COLUMN pin TEXT');
+  } catch {
+    // ignore
+  }
+
+  try {
+    await db.execute(`UPDATE users SET password=pin WHERE (password IS NULL OR password='') AND pin IS NOT NULL`);
+  } catch {
+    // ignore
+  }
+}
+
 export async function getDb() {
   if (!Capacitor.isNativePlatform()) {
     throw new Error('SQLite is only available on native platforms. Use Preferences fallback on web.');
@@ -89,6 +117,7 @@ export async function getDb() {
         reminderId INTEGER
       )`);
       await migrateAssignmentsTable(db);
+      await ensureUsersTable(db);
       return db;
     })();
   }

@@ -64,6 +64,14 @@ export default function CalendarView({ assignments }) {
   const selectedDay = useMemo(() => (selectedKey ? dayjs(selectedKey) : dayjs()), [selectedKey]);
   const selectedAssignments = useMemo(() => (selectedKey ? byDay.get(selectedKey) || [] : []), [byDay, selectedKey]);
 
+  function assignmentStatusForSheet(a) {
+    if (a.status === 'Completed') return { label: 'Completed', cls: 'bg-green-600 text-white' };
+    const d = a.deadline ? dayjs(a.deadline) : null;
+    if (d?.isValid() && d.isBefore(dayjs())) return { label: 'Overdue', cls: 'bg-red-600 text-white' };
+    if (d?.isValid() && d.isSame(dayjs(), 'day')) return { label: 'Due', cls: 'bg-orange-500 text-white' };
+    return { label: 'Pending', cls: 'bg-blue-800 text-white' };
+  }
+
   function selectDay(nextDay) {
     const nextKey = toDayKey(nextDay);
     const firstOpen = !sheetMounted;
@@ -87,8 +95,8 @@ export default function CalendarView({ assignments }) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-192px)] space-y-4">
-      <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-950">
+    <div className="flex h-full flex-col gap-3">
+      <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-gray-950">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -238,13 +246,16 @@ export default function CalendarView({ assignments }) {
                         <p className="min-w-0 truncate text-sm font-extrabold text-gray-900 dark:text-gray-100">
                           {a.title}
                         </p>
+                        {(() => {
+                          const meta = assignmentStatusForSheet(a);
+                          return (
                         <span
-                          className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-extrabold ${
-                            a.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-blue-800 text-white'
-                          }`}
+                              className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-extrabold ${meta.cls}`}
                         >
-                          {a.status}
+                              {meta.label}
                         </span>
+                          );
+                        })()}
                       </div>
                       <p className="mt-1 text-xs font-semibold italic text-gray-600 dark:text-gray-400">
                         {a.deadline ? dayjs(a.deadline).format('h:mm A') : '—'}

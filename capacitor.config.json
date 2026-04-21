@@ -1,0 +1,11 @@
+{
+  "appId": "com.sars.app",
+  "appName": "SARS",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "CapacitorSQLite": {
+      "androidDatabaseLocation": "default"
+    }
+  }
+}

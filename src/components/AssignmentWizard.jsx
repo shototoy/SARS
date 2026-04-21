@@ -76,8 +76,7 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
   const steps = useMemo(
     () => [
       { short: 'Details', title: 'Assignment details', icon: FileText, hint: 'Give it a clear title and subject.' },
-      { short: 'Schedule', title: 'Deadline & priority', icon: CalendarClock, hint: 'Set when it’s due and how urgent.' },
-      { short: 'Finish', title: 'Reminders & status', icon: Sparkles, hint: 'Optional reminders and completion status.' },
+      { short: 'Finish', title: 'Deadline, reminders & status', icon: Sparkles, hint: 'Set due date, reminders, and status.' },
     ],
     []
   );
@@ -86,7 +85,6 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
     const fieldsByStep = [
       ['title'],
       ['deadline', 'priority'],
-      [], // final step validates on submit
     ];
     const ok = await trigger(fieldsByStep[step]);
     if (!ok) return;
@@ -98,8 +96,8 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
   }
 
   return (
-    <div className="min-h-[calc(100vh-192px)] space-y-4 pb-24">
-      <div className="rounded-3xl border border-gray-100 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950 overflow-hidden">
+    <div className="h-full space-y-3">
+      <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
         <div className="bg-gradient-to-br from-blue-800 via-blue-800 to-indigo-700 px-5 py-4 text-white">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -195,11 +193,7 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
                 <option value="Low">Low</option>
               </select>
             </div>
-          </div>
-        ) : null}
 
-        {step === 2 ? (
-          <div className="space-y-4">
             <div>
               <label className="block text-sm font-extrabold text-gray-800 dark:text-gray-200">Description</label>
               <textarea
