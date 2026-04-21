@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import dayjs from 'dayjs';
-import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks, Sparkles } from 'lucide-react';
 
 function isOverdue(assignment) {
   if (!assignment?.deadline) return false;
@@ -125,12 +125,28 @@ export default function Dashboard({ assignments, onGoAssignments }) {
     return { total, completed, pending, overdue, dueSoon, upcoming };
   }, [assignments]);
 
+  const statusPill = useMemo(() => {
+    if (stats.total === 0) return { text: "You're on track", cls: 'bg-green-50 text-green-700 ring-green-200' };
+    if (stats.overdue > 0) return { text: 'Overdue tasks', cls: 'bg-red-50 text-red-700 ring-red-200' };
+    if (stats.dueSoon > 0) return { text: 'Due soon', cls: 'bg-orange-50 text-orange-700 ring-orange-200' };
+    if (stats.pending > 0) return { text: "You're on track", cls: 'bg-yellow-50 text-yellow-800 ring-yellow-200' };
+    return { text: "You're on track", cls: 'bg-green-50 text-green-700 ring-green-200' };
+  }, [stats.dueSoon, stats.overdue, stats.pending, stats.total]);
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-lg dark:border-gray-800 dark:bg-gray-950">
         <p className="text-sm font-extrabold tracking-tight text-blue-800 dark:text-blue-200">Your dashboard</p>
         <div className="mt-4">
           <ProgressBar assignments={assignments} onGoAssignments={onGoAssignments} />
+        </div>
+        <div className="mt-3">
+          <span
+            className={`inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-extrabold ring-1 ${statusPill.cls}`}
+          >
+            <Sparkles size={18} />
+            {statusPill.text}
+          </span>
         </div>
       </div>
 

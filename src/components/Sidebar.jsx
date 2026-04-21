@@ -19,17 +19,20 @@ export default function Sidebar({ open, onClose, activeTab, onSelectTab }) {
     []
   );
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-30">
+    <div className={`fixed inset-0 z-30 ${open ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       <button
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
         aria-label="Close sidebar"
+        type="button"
       />
 
-      <aside className="absolute left-0 top-0 h-full w-[min(340px,85vw)] overflow-auto bg-white shadow-2xl dark:bg-gray-950">
+      <aside
+        className={`absolute left-0 top-0 h-full w-full overflow-auto bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-gray-950 ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <div className="rounded-2xl bg-blue-800 p-2 text-white shadow-sm">

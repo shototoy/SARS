@@ -92,7 +92,7 @@ export default function AppHeader({ title, assignments, onOpenSidebar, onGoAssig
           </button>
 
           {open ? (
-            <div className="absolute right-0 mt-3 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
+            <div className="absolute right-0 mt-3 w-[min(360px,70vw)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
                 <p className="text-sm font-extrabold text-gray-900 dark:text-gray-100">Notifications</p>
                 <button
@@ -159,4 +159,3 @@ export default function AppHeader({ title, assignments, onOpenSidebar, onGoAssig
     </header>
   );
 }
-
