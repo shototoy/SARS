@@ -1,12 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import dayjs from 'dayjs';
 import {
   ArrowLeft,
   ArrowRight,
-  BellRing,
-  CalendarClock,
-  CheckCircle2,
-  CircleDashed,
   FileText,
   Save,
   Sparkles,
@@ -47,6 +44,13 @@ function StepProgress({ step, steps, onGoTo }) {
 export default function AssignmentWizard({ initialValues, mode, onCancel, onSubmit }) {
   const [step, setStep] = useState(0);
 
+  const normalizedDeadline = useMemo(() => {
+    if (!initialValues?.deadline) return '';
+    const d = dayjs(initialValues.deadline);
+    if (!d.isValid()) return '';
+    return d.format('YYYY-MM-DDTHH:mm');
+  }, [initialValues?.deadline]);
+
   const defaultValues = useMemo(
     () => ({
       title: '',
@@ -58,25 +62,23 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
       remindBeforeMinutes: 1440,
       status: 'Pending',
       ...initialValues,
+      deadline: normalizedDeadline,
     }),
-    [initialValues]
+    [initialValues, normalizedDeadline]
   );
 
   const {
-    control,
     register,
     handleSubmit,
+    getValues,
     trigger,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues });
 
-  const reminderEnabled = useWatch({ control, name: 'reminderEnabled' });
-  const status = useWatch({ control, name: 'status' });
-
   const steps = useMemo(
     () => [
       { short: 'Details', title: 'Assignment details', icon: FileText, hint: 'Give it a clear title and subject.' },
-      { short: 'Finish', title: 'Deadline, reminders & status', icon: Sparkles, hint: 'Set due date, reminders, and status.' },
+      { short: 'Finish', title: 'Deadline & priority', icon: Sparkles, hint: 'Pick a due date and priority.' },
     ],
     []
   );
@@ -86,7 +88,18 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
       ['title'],
       ['deadline', 'priority'],
     ];
-    const ok = await trigger(fieldsByStep[step]);
+
+    if (step === 0) {
+      const title = String(getValues('title') || '').trim();
+      if (!title) {
+        await trigger(['title'], { shouldFocus: true });
+        return;
+      }
+      setStep(1);
+      return;
+    }
+
+    const ok = await trigger(fieldsByStep[step] || [], { shouldFocus: true });
     if (!ok) return;
     setStep((s) => Math.min(s + 1, steps.length - 1));
   }
@@ -94,6 +107,10 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
   function prev() {
     setStep((s) => Math.max(s - 1, 0));
   }
+
+  const submit = handleSubmit(async (data) => {
+    await onSubmit(data);
+  });
 
   return (
     <div className="h-full space-y-3">
@@ -128,15 +145,19 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
         </div>
 
         <form
-          onSubmit={handleSubmit(async (data) => {
-            await onSubmit(data);
-          })}
+          onSubmit={(e) => {
+            // Never let the browser submit this form. Wizard navigation / save is button-driven.
+            e.preventDefault();
+          }}
           onKeyDown={async (e) => {
             if (e.key !== 'Enter') return;
             if (e.shiftKey) return;
             if (e.target?.tagName === 'TEXTAREA') return;
-            if (step >= steps.length - 1) return;
             e.preventDefault();
+            if (step >= steps.length - 1) {
+              await submit();
+              return;
+            }
             await next();
           }}
           className="p-5"
@@ -202,61 +223,6 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
                 placeholder="Optional details..."
               />
             </div>
-
-            <div className="rounded-2xl border border-gray-100 bg-blue-50/40 p-4 dark:border-gray-800 dark:bg-blue-950/10">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-extrabold text-gray-900 dark:text-gray-100">Reminder</p>
-                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-                    Scheduled reminders work on native builds.
-                  </p>
-                </div>
-                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-extrabold text-gray-800 dark:text-gray-200">
-                  <input type="checkbox" {...register('reminderEnabled')} className="h-4 w-4 accent-blue-800" />
-                  <span className="inline-flex items-center gap-2">
-                    <BellRing size={16} />
-                    Enabled
-                  </span>
-                </label>
-              </div>
-              <div className="mt-3">
-                <label className="block text-xs font-extrabold text-gray-700 dark:text-gray-300">Remind me</label>
-                <select
-                  {...register('remindBeforeMinutes', { valueAsNumber: true })}
-                  className={`${inputClassName} ${reminderEnabled ? '' : 'opacity-60'}`}
-                  disabled={!reminderEnabled}
-                >
-                  <option value={60}>1 hour before</option>
-                  <option value={180}>3 hours before</option>
-                  <option value={720}>12 hours before</option>
-                  <option value={1440}>1 day before</option>
-                  <option value={2880}>2 days before</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/30">
-              <p className="text-xs font-extrabold uppercase tracking-wide text-gray-600 dark:text-gray-400">Status</p>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <label className="cursor-pointer">
-                  <input type="radio" value="Pending" {...register('status')} className="peer sr-only" />
-                  <div className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm font-extrabold text-gray-800 shadow-sm transition peer-checked:border-blue-800 peer-checked:ring-2 peer-checked:ring-blue-800 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100">
-                    <CircleDashed size={18} />
-                    Pending
-                  </div>
-                </label>
-                <label className="cursor-pointer">
-                  <input type="radio" value="Completed" {...register('status')} className="peer sr-only" />
-                  <div className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm font-extrabold text-gray-800 shadow-sm transition peer-checked:border-green-600 peer-checked:ring-2 peer-checked:ring-green-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100">
-                    <CheckCircle2 size={18} />
-                    Completed
-                  </div>
-                </label>
-              </div>
-              <p className="mt-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
-                Selected: <span className="font-extrabold">{status}</span>
-              </p>
-            </div>
           </div>
         ) : null}
 
@@ -285,7 +251,8 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={submit}
                   disabled={isSubmitting}
                   className="inline-flex items-center gap-2 rounded-2xl bg-blue-800 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-blue-900 disabled:opacity-60"
                 >

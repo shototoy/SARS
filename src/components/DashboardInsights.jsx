@@ -46,14 +46,21 @@ export default function DashboardInsights({ assignments }) {
   );
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-2 gap-2.5">
-      <div className="flex min-h-0 flex-col rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+    <div className="grid h-full min-h-0 grid-cols-2 gap-3">
+      <div className="flex h-full min-h-0 flex-col rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
         <p className="text-[11px] font-extrabold text-gray-700 dark:text-gray-200">Status</p>
-        <div className="mt-1 flex-1 min-h-[96px]">
+        <div className="mt-1 flex-1 min-h-0">
           {hasAny ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={22} outerRadius={40} paddingAngle={2}>
+                <Pie
+                  data={statusData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius="58%"
+                  outerRadius="88%"
+                  paddingAngle={2}
+                >
                   {statusData.map((entry) => (
                     <Cell key={entry.name} fill={STATUS_COLORS[entry.name] || '#94A3B8'} />
                   ))}
@@ -69,17 +76,17 @@ export default function DashboardInsights({ assignments }) {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-col rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="flex h-full min-h-0 flex-col rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
         <p className="text-[11px] font-extrabold text-gray-700 dark:text-gray-200">Priority</p>
-        <div className="mt-1 flex-1 min-h-[96px]">
+        <div className="mt-1 flex-1 min-h-0">
           {hasAny ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={priorityData} margin={{ top: 2, right: 6, bottom: -6, left: -22 }}>
+              <BarChart data={priorityData} margin={{ top: 6, right: 6, bottom: 0, left: -18 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={10} />
                 <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={18} fontSize={10} />
                 <Tooltip />
-                <Bar dataKey="value" name="Assignments" barSize={18} radius={[10, 10, 10, 10]}>
+                <Bar dataKey="value" name="Assignments" radius={[10, 10, 10, 10]}>
                   {priorityData.map((entry) => (
                     <Cell key={entry.name} fill={PRIORITY_COLORS[entry.name] || '#94A3B8'} />
                   ))}

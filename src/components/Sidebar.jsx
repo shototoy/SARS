@@ -4,11 +4,13 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  Moon,
+  Sun,
   UserCircle2,
   X,
 } from 'lucide-react';
 
-export default function Sidebar({ open, onClose, activeTab, onSelectTab, onLogout }) {
+export default function Sidebar({ open, onClose, activeTab, onSelectTab, onLogout, theme, onToggleTheme }) {
   const items = useMemo(
     () => [
       { key: 'home', label: 'Home', icon: LayoutDashboard },
@@ -84,6 +86,37 @@ export default function Sidebar({ open, onClose, activeTab, onSelectTab, onLogou
             <p className="mt-0.5 truncate text-xs font-semibold text-gray-600 dark:text-gray-400">
               Enable reminders for near deadlines.
             </p>
+          </div>
+
+          <div className="mt-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-extrabold text-gray-900 dark:text-gray-100">Dark mode</p>
+                <p className="mt-0.5 text-xs font-semibold text-gray-600 dark:text-gray-400">
+                  {theme === 'dark' ? 'Enabled' : 'Disabled'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={onToggleTheme}
+                className={`relative inline-flex h-10 w-[64px] items-center rounded-full border transition ${
+                  theme === 'dark'
+                    ? 'border-blue-800 bg-blue-800'
+                    : 'border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900'
+                }`}
+                aria-label="Toggle dark mode"
+                aria-pressed={theme === 'dark'}
+              >
+                <span
+                  className={`absolute left-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-800 shadow-sm transition-transform ${
+                    theme === 'dark' ? 'translate-x-[24px]' : 'translate-x-0'
+                  }`}
+                >
+                  {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="mt-auto pt-4">

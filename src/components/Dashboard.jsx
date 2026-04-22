@@ -131,45 +131,45 @@ export default function Dashboard({ assignments, onGoAssignments }) {
 
   return (
     <div className="space-y-3.5">
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-2 gap-2">
         <div
-          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
           aria-label={`Total assignments: ${stats.total}`}
         >
-          <span className="rounded-xl bg-blue-50 p-1.5 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
-            <ListChecks size={18} />
+          <span className="rounded-xl bg-blue-50 p-2 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
+            <ListChecks size={22} />
           </span>
-          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{stats.total}</span>
+          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.total}</span>
         </div>
 
         <div
-          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
           aria-label={`Completed assignments: ${stats.completed}`}
         >
-          <span className="rounded-xl bg-green-50 p-1.5 text-green-700 dark:bg-green-950/30 dark:text-green-200">
-            <CheckCircle2 size={18} />
+          <span className="rounded-xl bg-green-50 p-2 text-green-700 dark:bg-green-950/30 dark:text-green-200">
+            <CheckCircle2 size={22} />
           </span>
-          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{stats.completed}</span>
+          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.completed}</span>
         </div>
 
         <div
-          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
           aria-label={`Due within 24 hours: ${stats.dueSoon}`}
         >
-          <span className="rounded-xl bg-orange-50 p-1.5 text-orange-700 dark:bg-orange-950/30 dark:text-orange-200">
-            <CalendarClock size={18} />
+          <span className="rounded-xl bg-orange-50 p-2 text-orange-700 dark:bg-orange-950/30 dark:text-orange-200">
+            <CalendarClock size={22} />
           </span>
-          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{stats.dueSoon}</span>
+          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.dueSoon}</span>
         </div>
 
         <div
-          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white px-2 py-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
           aria-label={`Overdue assignments: ${stats.overdue}`}
         >
-          <span className="rounded-xl bg-red-50 p-1.5 text-red-700 dark:bg-red-950/30 dark:text-red-200">
-            <AlertTriangle size={18} />
+          <span className="rounded-xl bg-red-50 p-2 text-red-700 dark:bg-red-950/30 dark:text-red-200">
+            <AlertTriangle size={22} />
           </span>
-          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{stats.overdue}</span>
+          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.overdue}</span>
         </div>
       </div>
 

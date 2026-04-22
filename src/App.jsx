@@ -5,13 +5,16 @@ import Dashboard from './components/Dashboard';
 import CalendarView from './components/CalendarView';
 import DashboardInsights from './components/DashboardInsights';
 import { getAssignments, addAssignment, updateAssignment, deleteAssignment } from './lib/db';
-import { syncAssignmentReminders } from './lib/reminders';
+import { syncAssignmentReminders, testLocalNotifications } from './lib/reminders';
 import AppHeader from './components/AppHeader';
 import Sidebar from './components/Sidebar';
 import FooterNav from './components/FooterNav';
-import { PlusCircle } from 'lucide-react';
-import Login from './components/Login';
+import { PlusCircle, TestTube2, X } from 'lucide-react';
 import { getCurrentUser, logout } from './lib/auth';
+import AppBackground from './components/AppBackground';
+import AuthGate from './components/AuthGate';
+import backgroundUrl from './assets/background.png';
+import logoUrl from './assets/logo.png';
 
 const TAB_ORDER = {
   assignments: 0,
@@ -31,6 +34,24 @@ function App() {
   const swipeRef = useRef(null);
   const [user, setUser] = useState(null);
   const [chromePx, setChromePx] = useState({ header: 80, footer: 96 });
+  const [booting, setBooting] = useState(true);
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('sars.theme');
+    return saved === 'dark' ? 'dark' : 'light';
+  });
+  const [notifTestBanner, setNotifTestBanner] = useState(null); // { type: 'ok'|'err', message, details }
+  const addWizardDefaults = useMemo(
+    () => ({
+      priority: 'Medium',
+      status: 'Pending',
+    }),
+    []
+  );
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('sars.theme', theme);
+  }, [theme]);
 
   function goAssignmentsList() {
     navigateTab('assignments');
@@ -68,10 +89,20 @@ function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const sessionUser = await getCurrentUser();
-      if (!cancelled) setUser(sessionUser);
-      const list = await getAssignments();
-      if (!cancelled) setAssignments(list);
+      const startedAt = Date.now();
+      try {
+        const [sessionUser, list] = await Promise.all([getCurrentUser(), getAssignments()]);
+        if (!cancelled) {
+          setUser(sessionUser);
+          setAssignments(list);
+        }
+      } finally {
+        const elapsed = Date.now() - startedAt;
+        const remaining = Math.max(0, 3000 - elapsed);
+        window.setTimeout(() => {
+          if (!cancelled) setBooting(false);
+        }, remaining);
+      }
     })();
     return () => {
       cancelled = true;
@@ -123,6 +154,30 @@ function App() {
     await refresh();
   }
 
+  async function handleToggleComplete(a) {
+    const nextStatus = a.status === 'Completed' ? 'Pending' : 'Completed';
+    await updateAssignment(a.id, { status: nextStatus });
+    await refresh();
+  }
+
+  async function handleTestNotifications() {
+    setNotifTestBanner({ type: 'ok', message: 'Testing notifications…', details: null });
+    try {
+      const res = await testLocalNotifications({ secondsFromNow: 5 });
+      setNotifTestBanner({
+        type: res.ok ? 'ok' : 'err',
+        message: res.message || (res.ok ? 'Scheduled.' : 'Failed.'),
+        details: res.details || null,
+      });
+    } catch (e) {
+      setNotifTestBanner({
+        type: 'err',
+        message: 'Unexpected error while testing notifications.',
+        details: { error: String(e?.message || e) },
+      });
+    }
+  }
+
   function handleEdit(a) {
     setEditingAssignment(a);
     setAssignmentsView('edit');
@@ -144,7 +199,7 @@ function App() {
       return (
         <div className="flex h-full flex-col gap-4 py-2">
           <Dashboard assignments={assignments} onGoAssignments={goAssignmentsList} />
-          <div className="flex-1 min-h-0 rounded-2xl border border-gray-100 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-gray-950">
+          <div className="flex-1 min-h-[220px] rounded-2xl border border-gray-100 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-gray-950">
             <DashboardInsights assignments={assignments} />
           </div>
         </div>
@@ -158,6 +213,35 @@ function App() {
         <section className="flex h-full flex-col gap-3">
           {assignmentsView === 'list' ? (
             <>
+              {notifTestBanner ? (
+                <div
+                  className={`sticky top-0 z-10 rounded-2xl border p-3 shadow-sm ${
+                    notifTestBanner.type === 'ok'
+                      ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-200'
+                      : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-extrabold">{notifTestBanner.message}</p>
+                      {notifTestBanner.details ? (
+                        <pre className="mt-2 max-h-28 overflow-auto rounded-xl bg-white/70 p-2 text-[11px] font-semibold text-gray-900 dark:bg-gray-950/50 dark:text-gray-100">
+                          {JSON.stringify(notifTestBanner.details, null, 2)}
+                        </pre>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNotifTestBanner(null)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/70 text-gray-900 hover:bg-white dark:bg-gray-950/40 dark:text-gray-100 dark:hover:bg-gray-950/60"
+                      aria-label="Dismiss"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-base font-extrabold tracking-tight text-blue-800 dark:text-blue-200">
@@ -167,30 +251,49 @@ function App() {
                     Tap a card to edit. Long lists stay fast.
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setAssignmentsView('add');
-                    setEditingAssignment(null);
-                  }}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-800 px-4 py-2 text-sm font-extrabold text-white shadow-sm transition hover:bg-blue-900"
-                >
-                  <PlusCircle size={18} />
-                  Add
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleTestNotifications}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm font-extrabold text-gray-800 shadow-sm transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900"
+                  >
+                    <TestTube2 size={18} />
+                    Test
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAssignmentsView('add');
+                      setEditingAssignment(null);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-blue-800 px-4 py-2 text-sm font-extrabold text-white shadow-sm transition hover:bg-blue-900"
+                  >
+                    <PlusCircle size={18} />
+                    Add
+                  </button>
+                </div>
               </div>
 
               <div className="min-h-0 flex-1 overflow-auto pb-2">
-                <AssignmentList assignments={assignments} onEdit={handleEdit} onDelete={handleDelete} />
+                <AssignmentList
+                  assignments={assignments}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onToggleComplete={handleToggleComplete}
+                />
               </div>
             </>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto pb-2">
               <AssignmentWizard
+                key={
+                  assignmentsView === 'edit' && editingAssignment
+                    ? `edit:${editingAssignment.id}`
+                    : 'add'
+                }
                 mode={assignmentsView === 'edit' ? 'edit' : 'add'}
                 initialValues={
                   assignmentsView === 'edit' && editingAssignment
                     ? editingAssignment
-                    : { priority: 'Medium', status: 'Pending', reminderEnabled: false, remindBeforeMinutes: 1440 }
+                    : addWizardDefaults
                 }
                 onCancel={() => {
                   setAssignmentsView('list');
@@ -208,15 +311,17 @@ function App() {
   }
 
   if (!user) {
-    return <Login onAuthed={(u) => setUser(u)} />;
+    return <AuthGate booting={booting} onAuthed={(u) => setUser(u)} logoUrl={logoUrl} backgroundUrl={backgroundUrl} />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      <AppHeader
-        title={title}
-        assignments={assignments}
-        onOpenSidebar={() => setSidebarOpen(true)}
+    <div className="relative min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <AppBackground imageUrl={backgroundUrl} opacity={0.08} />
+      <div className="relative z-10">
+        <AppHeader
+          title={title}
+          assignments={assignments}
+          onOpenSidebar={() => setSidebarOpen(true)}
         onGoAssignments={goAssignmentsList}
       />
 
@@ -224,12 +329,16 @@ function App() {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         activeTab={tab}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
         onLogout={async () => {
           await logout();
           setUser(null);
           setSidebarOpen(false);
         }}
         onSelectTab={(next) => {
+          const current = tabTransition ? tabTransition.to : tab;
+          if (next === current) return;
           navigateTab(next);
           if (next === 'assignments') {
             setAssignmentsView('list');
@@ -238,13 +347,14 @@ function App() {
         }}
       />
 
-      <main
+        <main
         className="mx-auto h-[100dvh] w-full max-w-4xl overflow-hidden px-4 md:px-6"
         style={{ paddingTop: chromePx.header, paddingBottom: chromePx.footer }}
       >
         <div
           className="relative h-full overflow-hidden"
           onPointerDown={(e) => {
+            swipeRef.current = null;
             if (assignmentsView !== 'list' && tab === 'assignments') return;
             if (e.pointerType === 'mouse') return;
             swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now(), id: e.pointerId };
@@ -283,6 +393,9 @@ function App() {
               navigateTab(next);
             }
           }}
+          onPointerCancel={() => {
+            swipeRef.current = null;
+          }}
         >
           {tabTransition ? (
             <>
@@ -320,6 +433,8 @@ function App() {
       <FooterNav
         tab={tab}
         onSelectTab={(next) => {
+          const current = tabTransition ? tabTransition.to : tab;
+          if (next === current) return;
           navigateTab(next);
           if (next === 'assignments') {
             setAssignmentsView('list');
@@ -327,6 +442,7 @@ function App() {
           }
         }}
       />
+      </div>
     </div>
   );
 }

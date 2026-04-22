@@ -2,6 +2,15 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { BellRing, Menu, X, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 
+function useNowTick(intervalMs = 30_000) {
+  const [tick, setTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setTick(Date.now()), intervalMs);
+    return () => window.clearInterval(id);
+  }, [intervalMs]);
+  return tick;
+}
+
 function useOnClickOutside(ref, handler) {
   useEffect(() => {
     const onPointerDown = (e) => {
@@ -14,8 +23,7 @@ function useOnClickOutside(ref, handler) {
   }, [handler, ref]);
 }
 
-function makeNotificationItems(assignments) {
-  const now = dayjs();
+function makeNotificationItems(assignments, now) {
   const items = [];
 
   for (const a of assignments) {
@@ -52,7 +60,9 @@ export default function AppHeader({ title, assignments, onOpenSidebar, onGoAssig
   const dropdownRef = useRef(null);
   useOnClickOutside(dropdownRef, () => setOpen(false));
 
-  const items = useMemo(() => makeNotificationItems(assignments), [assignments]);
+  const nowTick = useNowTick(30_000);
+  const now = useMemo(() => dayjs(nowTick), [nowTick]);
+  const items = useMemo(() => makeNotificationItems(assignments, now), [assignments, now]);
   const hasUrgent = items.some((i) => i.kind === 'overdue');
   const shouldPulse = items.length > 0;
 

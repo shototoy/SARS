@@ -6,6 +6,10 @@
   "plugins": {
     "CapacitorSQLite": {
       "androidDatabaseLocation": "default"
+    },
+    "LocalNotifications": {
+      "sound": "beep",
+      "iconColor": "#1E40AF"
     }
   }
 }

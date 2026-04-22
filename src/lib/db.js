@@ -17,10 +17,9 @@ function normalizeAssignmentInput(data) {
     deadline: data.deadline ? String(data.deadline) : null,
     priority: data.priority || 'Medium',
     status,
-    reminderEnabled: Boolean(data.reminderEnabled),
-    remindBeforeMinutes: Number.isFinite(Number(data.remindBeforeMinutes))
-      ? Number(data.remindBeforeMinutes)
-      : 1440,
+    // Reminders are an app-level feature (not user-configurable per assignment).
+    reminderEnabled: true,
+    remindBeforeMinutes: 1440,
   };
 }
 
