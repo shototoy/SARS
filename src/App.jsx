@@ -5,7 +5,7 @@ import Dashboard from './components/Dashboard';
 import CalendarView from './components/CalendarView';
 import DashboardInsights from './components/DashboardInsights';
 import { getAssignments, addAssignment, updateAssignment, deleteAssignment } from './lib/db';
-import { syncAssignmentReminders, testLocalNotifications } from './lib/reminders';
+import { syncAssignmentReminders } from './lib/reminders';
 import AppHeader from './components/AppHeader';
 import Sidebar from './components/Sidebar';
 import FooterNav from './components/FooterNav';
@@ -39,7 +39,6 @@ function App() {
     const saved = localStorage.getItem('sars.theme');
     return saved === 'dark' ? 'dark' : 'light';
   });
-  const [notifTestBanner, setNotifTestBanner] = useState(null); // { type: 'ok'|'err', message, details }
   const addWizardDefaults = useMemo(
     () => ({
       priority: 'Medium',
@@ -161,21 +160,16 @@ function App() {
   }
 
   async function handleTestNotifications() {
-    setNotifTestBanner({ type: 'ok', message: 'Testing notifications…', details: null });
-    try {
-      const res = await testLocalNotifications({ secondsFromNow: 5 });
-      setNotifTestBanner({
-        type: res.ok ? 'ok' : 'err',
-        message: res.message || (res.ok ? 'Scheduled.' : 'Failed.'),
-        details: res.details || null,
-      });
-    } catch (e) {
-      setNotifTestBanner({
-        type: 'err',
-        message: 'Unexpected error while testing notifications.',
-        details: { error: String(e?.message || e) },
-      });
-    }
+    const deadline = new Date(Date.now() + 60000);
+    const localIso = new Date(deadline.getTime() - deadline.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    await handleAdd({
+      title: 'TEST',
+      subject: 'TEST',
+      description: 'TEST',
+      deadline: localIso,
+      priority: 'Medium',
+      status: 'Pending',
+    });
   }
 
   function handleEdit(a) {
@@ -213,35 +207,6 @@ function App() {
         <section className="flex h-full flex-col gap-3">
           {assignmentsView === 'list' ? (
             <>
-              {notifTestBanner ? (
-                <div
-                  className={`sticky top-0 z-10 rounded-2xl border p-3 shadow-sm ${
-                    notifTestBanner.type === 'ok'
-                      ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-200'
-                      : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-extrabold">{notifTestBanner.message}</p>
-                      {notifTestBanner.details ? (
-                        <pre className="mt-2 max-h-28 overflow-auto rounded-xl bg-white/70 p-2 text-[11px] font-semibold text-gray-900 dark:bg-gray-950/50 dark:text-gray-100">
-                          {JSON.stringify(notifTestBanner.details, null, 2)}
-                        </pre>
-                      ) : null}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setNotifTestBanner(null)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/70 text-gray-900 hover:bg-white dark:bg-gray-950/40 dark:text-gray-100 dark:hover:bg-gray-950/60"
-                      aria-label="Dismiss"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-base font-extrabold tracking-tight text-blue-800 dark:text-blue-200">
