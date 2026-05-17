@@ -60,7 +60,6 @@ export async function getCurrentUser() {
       const res = await db.query('SELECT id, username FROM users WHERE id=?', [session.userId]);
       return res.values?.[0] || null;
     } catch {
-      // fall back to web store
     }
   }
 
@@ -94,7 +93,6 @@ export async function registerUser({ username, password, pin }) {
       return user;
     } catch (e) {
       if (String(e?.message || '').includes('exists')) throw e;
-      // fall back to web store
     }
   }
 
@@ -125,7 +123,6 @@ export async function login({ username, password, pin }) {
       return { id: row.id, username: row.username };
     } catch (e) {
       if (String(e?.message || '').includes('Invalid')) throw e;
-      // fall back to web store
     }
   }
 

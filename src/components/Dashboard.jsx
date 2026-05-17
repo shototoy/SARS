@@ -2,40 +2,110 @@ import React, { useMemo } from 'react';
 import dayjs from 'dayjs';
 import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks, Sparkles } from 'lucide-react';
 
-const isOverdue = (a) => a.deadline && a.status !== 'Completed' && dayjs(a.deadline).isBefore(dayjs());
-const isDueSoon = (a) => a.deadline && a.status !== 'Completed' && dayjs(a.deadline).diff(dayjs(), 'hour', true) <= 24 && dayjs(a.deadline).isAfter(dayjs());
+function isOverdue(assignment) {
+  if (!assignment?.deadline) return false;
+  const deadline = dayjs(assignment.deadline);
+  return deadline.isValid() && deadline.isBefore(dayjs()) && assignment.status !== 'Completed';
+}
 
-const StatCard = ({ icon: Icon, count, label, colorCls }) => (
-  <div className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950" aria-label={`${label}: ${count}`}>
-    <span className={`rounded-xl p-2 ${colorCls}`}><Icon size={22} /></span>
-    <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{count}</span>
-  </div>
-);
+function isDueSoon(assignment, hours = 24) {
+  if (!assignment?.deadline) return false;
+  const deadline = dayjs(assignment.deadline);
+  if (!deadline.isValid()) return false;
+  const diffHours = deadline.diff(dayjs(), 'hour', true);
+  return diffHours > 0 && diffHours <= hours && assignment.status !== 'Completed';
+}
 
-function ProgressBar({ stats, onGoAssignments }) {
+function getProgressCounts(assignments) {
+  const now = dayjs();
+  const total = assignments.length;
+  let completed = 0;
+  let overdue = 0;
+  let due = 0;
+  let pending = 0;
+
+  for (const a of assignments) {
+    const isCompleted = a.status === 'Completed';
+    if (isCompleted) {
+      completed += 1;
+      continue;
+    }
+
+    const deadline = a.deadline ? dayjs(a.deadline) : null;
+    const hasValidDeadline = Boolean(deadline && deadline.isValid());
+
+    if (hasValidDeadline && deadline.isBefore(now)) {
+      overdue += 1;
+      continue;
+    }
+
+    if (hasValidDeadline && deadline.isAfter(now) && deadline.diff(now, 'hour', true) <= 24) {
+      due += 1;
+      continue;
+    }
+
+    pending += 1;
+  }
+
+  return { total, completed, pending, due, overdue };
+}
+
+function ProgressBar({ assignments, onGoAssignments }) {
+  const counts = useMemo(() => getProgressCounts(assignments), [assignments]);
+
   const segments = useMemo(() => {
-    if (stats.total === 0) return [{ key: 'none', count: 1, cls: 'bg-green-500', label: 'All set' }];
+    if (counts.total === 0) {
+      return [{ key: 'allGood', label: 'All set', count: 1, cls: 'bg-green-500', title: 'No tasks' }];
+    }
+
     return [
-      { key: 'completed', count: stats.completed, cls: 'bg-green-500', label: 'Completed' },
-      { key: 'pending', count: stats.pending - stats.dueSoon - stats.overdue, cls: 'bg-yellow-400', label: 'Pending' },
-      { key: 'due', count: stats.dueSoon, cls: 'bg-orange-500', label: 'Due' },
-      { key: 'overdue', count: stats.overdue, cls: 'bg-red-600', label: 'Overdue' },
-    ].filter(s => s.count > 0);
-  }, [stats]);
+      { key: 'completed', label: 'Completed', count: counts.completed, cls: 'bg-green-500' },
+      { key: 'pending', label: 'Pending', count: counts.pending, cls: 'bg-yellow-400' },
+      { key: 'due', label: 'Due', count: counts.due, cls: 'bg-orange-500' },
+      { key: 'overdue', label: 'Overdue', count: counts.overdue, cls: 'bg-red-600' },
+    ].filter((s) => s.count > 0);
+  }, [counts.completed, counts.due, counts.overdue, counts.pending, counts.total]);
+
+  const boundaries = useMemo(() => {
+    if (counts.total === 0) return [];
+    const result = [];
+    let sum = 0;
+    for (let i = 0; i < segments.length - 1; i += 1) {
+      sum += segments[i].count;
+      const pct = (sum / counts.total) * 100;
+      if (pct > 0 && pct < 100) result.push(pct);
+    }
+    return result;
+  }, [counts.total, segments]);
 
   return (
-    <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800">
-      <div className="flex h-full w-full">
-        {segments.map(s => (
-          <button
-            key={s.key}
-            onClick={onGoAssignments}
-            className={`${s.cls} h-full outline-none transition hover:brightness-95`}
-            style={{ flexGrow: s.count }}
-            title={`${s.count} ${s.label}`}
-          />
-        ))}
+    <div className="relative">
+      <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800">
+        <div className="flex h-full w-full">
+          {segments.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              onClick={onGoAssignments}
+              className={`${s.cls} h-full flex-[1_1_0] outline-none transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-blue-800`}
+              style={{ flexGrow: s.count }}
+              title={
+                s.title ||
+                `${s.count} ${s.label.toLowerCase()}${s.count === 1 ? '' : ''} / ${counts.total} total`
+              }
+              aria-label={`${s.count} ${s.label}`}
+            />
+          ))}
+        </div>
       </div>
+
+      {boundaries.map((left) => (
+        <div
+          key={left}
+          className="pointer-events-none absolute top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-white/80 dark:bg-black/40"
+          style={{ left: `${left}%` }}
+        />
+      ))}
     </div>
   );
 }
@@ -43,32 +113,78 @@ function ProgressBar({ stats, onGoAssignments }) {
 export default function Dashboard({ assignments, onGoAssignments }) {
   const stats = useMemo(() => {
     const total = assignments.length;
-    const completed = assignments.filter(a => a.status === 'Completed').length;
+    const completed = assignments.filter((a) => a.status === 'Completed').length;
+    const pending = assignments.filter((a) => a.status !== 'Completed').length;
     const overdue = assignments.filter(isOverdue).length;
-    const dueSoon = assignments.filter(isDueSoon).length;
-    return { total, completed, pending: total - completed, overdue, dueSoon };
+    const dueSoon = assignments.filter((a) => isDueSoon(a, 24)).length;
+
+    return { total, completed, pending, overdue, dueSoon };
   }, [assignments]);
 
-  const pill = useMemo(() => {
-    if (stats.total === 0 || (stats.overdue === 0 && stats.dueSoon === 0)) return { text: "You're on track", cls: 'bg-green-50 text-green-700 ring-green-200' };
+  const statusPill = useMemo(() => {
+    if (stats.total === 0) return { text: "You're on track", cls: 'bg-green-50 text-green-700 ring-green-200' };
     if (stats.overdue > 0) return { text: 'Overdue tasks', cls: 'bg-red-50 text-red-700 ring-red-200' };
-    return { text: 'Due soon', cls: 'bg-orange-50 text-orange-700 ring-orange-200' };
-  }, [stats]);
+    if (stats.dueSoon > 0) return { text: 'Due soon', cls: 'bg-orange-50 text-orange-700 ring-orange-200' };
+    if (stats.pending > 0) return { text: "You're on track", cls: 'bg-yellow-50 text-yellow-800 ring-yellow-200' };
+    return { text: "You're on track", cls: 'bg-green-50 text-green-700 ring-green-200' };
+  }, [stats.dueSoon, stats.overdue, stats.pending, stats.total]);
 
   return (
     <div className="space-y-3.5">
       <div className="grid grid-cols-2 gap-2">
-        <StatCard icon={ListChecks} count={stats.total} label="Total" colorCls="bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200" />
-        <StatCard icon={CheckCircle2} count={stats.completed} label="Completed" colorCls="bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-200" />
-        <StatCard icon={CalendarClock} count={stats.dueSoon} label="Due soon" colorCls="bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-200" />
-        <StatCard icon={AlertTriangle} count={stats.overdue} label="Overdue" colorCls="bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-200" />
+        <div
+          className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          aria-label={`Total assignments: ${stats.total}`}
+        >
+          <span className="rounded-xl bg-blue-50 p-2 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
+            <ListChecks size={22} />
+          </span>
+          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.total}</span>
+        </div>
+
+        <div
+          className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          aria-label={`Completed assignments: ${stats.completed}`}
+        >
+          <span className="rounded-xl bg-green-50 p-2 text-green-700 dark:bg-green-950/30 dark:text-green-200">
+            <CheckCircle2 size={22} />
+          </span>
+          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.completed}</span>
+        </div>
+
+        <div
+          className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          aria-label={`Due within 24 hours: ${stats.dueSoon}`}
+        >
+          <span className="rounded-xl bg-orange-50 p-2 text-orange-700 dark:bg-orange-950/30 dark:text-orange-200">
+            <CalendarClock size={22} />
+          </span>
+          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.dueSoon}</span>
+        </div>
+
+        <div
+          className="flex items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-lg dark:border-gray-800 dark:bg-gray-950"
+          aria-label={`Overdue assignments: ${stats.overdue}`}
+        >
+          <span className="rounded-xl bg-red-50 p-2 text-red-700 dark:bg-red-950/30 dark:text-red-200">
+            <AlertTriangle size={22} />
+          </span>
+          <span className="text-lg font-extrabold text-gray-900 dark:text-gray-100">{stats.overdue}</span>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-gray-950">
-        <p className="text-sm font-extrabold tracking-tight text-blue-800 dark:text-blue-200">Your progress</p>
-        <div className="mt-2"><ProgressBar stats={stats} onGoAssignments={onGoAssignments} /></div>
+        <p className="text-sm font-extrabold tracking-tight text-blue-800 dark:text-blue-200">Your dashboard</p>
         <div className="mt-2">
-          <span className={`inline-flex items-center gap-2 rounded-2xl px-3 py-1.5 text-sm font-extrabold ring-1 ${pill.cls}`}><Sparkles size={18} />{pill.text}</span>
+          <ProgressBar assignments={assignments} onGoAssignments={onGoAssignments} />
+        </div>
+        <div className="mt-2">
+          <span
+            className={`inline-flex items-center gap-2 rounded-2xl px-3 py-1.5 text-sm font-extrabold ring-1 ${statusPill.cls}`}
+          >
+            <Sparkles size={18} />
+            {statusPill.text}
+          </span>
         </div>
       </div>
     </div>

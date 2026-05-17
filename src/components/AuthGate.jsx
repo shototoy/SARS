@@ -23,8 +23,8 @@ function computeStartRectForEnd(endRect) {
 }
 
 export default function AuthGate({ booting, onAuthed, logoUrl, backgroundUrl }) {
-  const [phase, setPhase] = useState(() => (booting ? 'splash' : 'done')); // splash | reveal | done
-  const [logoFixed, setLogoFixed] = useState(null); // {left, top, width, height}
+  const [phase, setPhase] = useState(() => (booting ? 'splash' : 'done'));
+  const [logoFixed, setLogoFixed] = useState(null);
   const [logoTransform, setLogoTransform] = useState('none');
   const [overlayVisible, setOverlayVisible] = useState(true);
   const targetRef = useRef(null);

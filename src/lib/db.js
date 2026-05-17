@@ -17,7 +17,6 @@ function normalizeAssignmentInput(data) {
     deadline: data.deadline ? String(data.deadline) : null,
     priority: data.priority || 'Medium',
     status,
-    // Reminders are an app-level feature (not user-configurable per assignment).
     reminderEnabled: true,
     remindBeforeMinutes: 1440,
   };
@@ -56,7 +55,6 @@ async function migrateAssignmentsTable(db) {
     try {
       await db.execute(`ALTER TABLE assignments ADD COLUMN ${name} ${definition}`);
     } catch {
-      // ignore (already exists)
     }
   };
 
@@ -77,19 +75,16 @@ async function ensureUsersTable(db) {
   try {
     await db.execute('ALTER TABLE users ADD COLUMN password TEXT');
   } catch {
-    // ignore
   }
 
   try {
     await db.execute('ALTER TABLE users ADD COLUMN pin TEXT');
   } catch {
-    // ignore
   }
 
   try {
     await db.execute(`UPDATE users SET password=pin WHERE (password IS NULL OR password='') AND pin IS NOT NULL`);
   } catch {
-    // ignore
   }
 }
 
@@ -131,7 +126,6 @@ export async function getAssignments() {
       const res = await db.query('SELECT * FROM assignments ORDER BY deadline ASC');
       return res.values || [];
     } catch {
-      // Fall back to Preferences below.
     }
   }
 
@@ -160,7 +154,6 @@ export async function addAssignment(data) {
       );
       return;
     } catch {
-      // Fall back to Preferences below.
     }
   }
 
@@ -193,7 +186,6 @@ export async function updateAssignment(id, data) {
       );
       return;
     } catch {
-      // Fall back to Preferences below.
     }
   }
 
@@ -211,7 +203,6 @@ export async function deleteAssignment(id) {
       await db.run('DELETE FROM assignments WHERE id=?', [id]);
       return;
     } catch {
-      // Fall back to Preferences below.
     }
   }
 
