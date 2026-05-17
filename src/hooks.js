@@ -1,57 +1,99 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { getAssignments, addAssignment, updateAssignment, deleteAssignment } from './lib/db';
-import { syncAssignmentReminders } from './lib/reminders';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import * as db from './lib/db';
+import * as auth from './lib/auth';
 
-// Theme Hook
-export function useTheme() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('sars.theme') === 'dark' ? 'dark' : 'light');
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('sars.theme', theme);
-  }, [theme]);
-  return { theme, toggleTheme: () => setTheme(t => t === 'dark' ? 'light' : 'dark') };
-}
+dayjs.extend(relativeTime);
 
-// Assignments Hook
 export function useAssignments(user) {
   const [assignments, setAssignments] = useState([]);
-  const prevIdsRef = useRef(new Set());
-  const refresh = async () => setAssignments(await getAssignments());
+  const refresh = async () => setAssignments(await db.getAssignments());
   useEffect(() => { if (user) refresh(); }, [user]);
-  useEffect(() => {
-    syncAssignmentReminders(assignments, prevIdsRef.current);
-    prevIdsRef.current = new Set(assignments.map(a => a.id));
-  }, [assignments]);
   return {
     assignments,
     refresh,
-    handleAdd: async d => { await addAssignment(d); await refresh(); },
-    handleUpdate: async (id, d) => { await updateAssignment(id, d); await refresh(); },
-    handleDelete: async id => { await deleteAssignment(id); await refresh(); },
+    handleAdd: async d => { await db.addAssignment(d); await refresh(); },
+    handleUpdate: async (id, d) => { await db.updateAssignment(id, d); await refresh(); },
+    handleDelete: async id => { await db.deleteAssignment(id); await refresh(); },
     handleToggleComplete: async a => {
       const status = a.status === 'Completed' ? 'Pending' : 'Completed';
-      await updateAssignment(a.id, { ...a, status });
+      await db.updateAssignment(a.id, { ...a, status });
       await refresh();
     }
   };
 }
 
-// Navigation Hook
-export function useNavigation() {
+export function useAnnouncements(user) {
+  const [announcements, setAnnouncements] = useState([]);
+  const refresh = async () => setAnnouncements(await db.getAnnouncements(user));
+  useEffect(() => { if (user) refresh(); }, [user]);
+  return {
+    announcements,
+    refresh,
+    handleAdd: async d => { await db.addAnnouncement(d); await refresh(); }
+  };
+}
+
+export function useDocuments(user) {
+  const [documents, setDocuments] = useState([]);
+  const refresh = async () => setDocuments(await db.getDocuments(user));
+  useEffect(() => { if (user) refresh(); }, [user]);
+  return {
+    documents,
+    refresh,
+    handleAdd: async d => { await db.addDocument(d); await refresh(); },
+    handleDelete: async id => { await db.deleteDocument(id, user.id); await refresh(); }
+  };
+}
+
+export function useMessages(user) {
+  const [messages, setMessages] = useState([]);
+  const refresh = async () => { if (user) setMessages(await db.getMessages(user.id)); };
+  useEffect(() => { refresh(); }, [user]);
+  return {
+    messages,
+    refresh,
+    handleSend: async m => { await db.sendMessage({ ...m, senderId: user.id }); await refresh(); }
+  };
+}
+
+export function useUsers(user) {
+  const [users, setUsers] = useState([]);
+  const refresh = async () => { if (user) setUsers(await auth.getAllUsers()); };
+  useEffect(() => { refresh(); }, [user]);
+  return {
+    users,
+    refresh,
+    handleCreate: async d => { await auth.createUser(d); await refresh(); }
+  };
+}
+
+export function useNavigation(user) {
   const [tab, setTab] = useState('home');
   const [tabTransition, setTabTransition] = useState(null);
   const transitionKeyRef = useRef(0);
   const swipeRef = useRef(null);
-  const TAB_ORDER = { assignments: 0, home: 1, calendar: 2 };
-  const TAB_LIST = ['assignments', 'home', 'calendar'];
+
+  const TAB_LIST = useMemo(() => {
+    if (user?.role === 'admin') {
+      return ['home', 'documents', 'users'];
+    }
+    if (user?.role === 'faculty') {
+      return ['home', 'courses', 'messages', 'reminders', 'calendar', 'documents'];
+    }
+    return ['home', 'messages', 'reminders', 'calendar', 'documents'];
+  }, [user]);
+
+  const TAB_ORDER = useMemo(() => {
+    return TAB_LIST.reduce((acc, t, i) => { acc[t] = i; return acc; }, {});
+  }, [TAB_LIST]);
 
   const navigateTab = (next) => {
     const from = tabTransition ? tabTransition.to : tab;
     if (next === from) return;
-    const dir = (TAB_ORDER[next] ?? 0) < (TAB_ORDER[from] ?? 0) ? 'from-left' : 'from-right';
     const key = ++transitionKeyRef.current;
-    setTabTransition({ from, to: next, dir, key, phase: 'start' });
+    setTabTransition({ from, to: next, key, phase: 'start' });
     setTab(next);
     requestAnimationFrame(() => setTabTransition(t => t?.key === key ? { ...t, phase: 'animate' } : t));
     setTimeout(() => setTabTransition(t => t?.key === key ? null : t), 800);
@@ -74,18 +116,16 @@ export function useNavigation() {
     }
   };
 
-  return { tab, tabTransition, navigateTab, swipeHandlers };
+  return { tab, tabTransition, navigateTab, swipeHandlers, tabs: TAB_LIST };
 }
 
-// Layout Hook
 export function useChromeMeasurement(user) {
-  const [chromePx, setChromePx] = useState({ header: 80, footer: 96 });
+  const [chromePx, setChromePx] = useState({ header: 80, footer: 0 });
   useEffect(() => {
     if (!user) return;
     const measure = () => {
       const h = document.getElementById('app-header')?.getBoundingClientRect().height;
-      const f = document.getElementById('app-footer')?.getBoundingClientRect().height;
-      if (h && f) setChromePx(p => p.header === h && p.footer === f ? p : { header: Math.round(h), footer: Math.round(f) });
+      if (h) setChromePx(p => p.header === h ? p : { header: Math.round(h), footer: 0 });
     };
     measure();
     window.addEventListener('resize', measure);
@@ -94,28 +134,83 @@ export function useChromeMeasurement(user) {
   return chromePx;
 }
 
-// Notifications Hook
-export function useNotifications(assignments) {
+export function useNotifications(assignments = [], announcements = [], messages = []) {
   const [now, setNow] = useState(() => dayjs());
+  const prevItemsRef = useRef([]);
+
   useEffect(() => {
     const id = setInterval(() => setNow(dayjs()), 30000);
     return () => clearInterval(id);
   }, []);
 
   const items = useMemo(() => {
-    return assignments.filter(a => a.deadline && a.status !== 'Completed').map(a => {
+    const list = [];
+    assignments.filter(a => a.deadline && a.status !== 'Completed').forEach(a => {
       const d = dayjs(a.deadline);
-      const isOverdue = d.isBefore(now);
-      const isDueSoon = d.isAfter(now) && d.diff(now, 'hour', true) <= 24;
-      if (!isOverdue && !isDueSoon) return null;
-      return { id: a.id, title: a.title, subject: a.subject, when: d, kind: isOverdue ? 'overdue' : 'dueSoon' };
-    }).filter(Boolean).sort((a, b) => a.when.valueOf() - b.when.valueOf()).slice(0, 8);
-  }, [assignments, now]);
+      const diff = d.diff(now, 'hour', true);
+      if (d.isBefore(now)) {
+        list.push({ id: `a-${a.id}`, title: a.title, sub: a.subject, when: d, kind: 'overdue' });
+      } else if (diff <= 24) {
+        list.push({ id: `a-${a.id}`, title: a.title, sub: a.subject, when: d, kind: 'dueSoon' });
+      }
+    });
 
-  return { items, hasUrgent: items.some(i => i.kind === 'overdue') };
+    announcements.forEach(a => {
+      list.push({ id: `ann-${a.id}`, title: a.title, sub: a.type === 'Event' ? 'Event' : 'Announcement', when: dayjs(a.date), kind: 'info' });
+    });
+
+    const unreadMessages = messages.filter(m => !m.is_read);
+    unreadMessages.forEach(m => {
+      list.push({ id: `msg-${m.id}`, title: 'New Message', sub: m.content, when: dayjs(m.timestamp), kind: 'message' });
+    });
+
+    return list.sort((a, b) => b.when.valueOf() - a.when.valueOf()).slice(0, 10);
+  }, [assignments, announcements, messages, now]);
+
+  const [newItems, setNewItems] = useState([]);
+  const hasLoadedRef = useRef(false);
+
+  useEffect(() => {
+    let added = items.filter(i => !prevItemsRef.current.find(p => p.id === i.id));
+    if (!hasLoadedRef.current) {
+      added = added.filter(i => i.kind === 'message');
+      hasLoadedRef.current = true;
+    }
+    setNewItems(added);
+    prevItemsRef.current = items;
+  }, [items]);
+
+  return { 
+    items, 
+    hasUrgent: items.some(i => i.kind === 'overdue' || i.kind === 'dueSoon'),
+    newItems
+  };
 }
 
-// Generic Hooks
+export function usePolling(refreshers = [], interval = 30000) {
+  useEffect(() => {
+    const id = setInterval(() => {
+      refreshers.forEach(r => r());
+    }, interval);
+    return () => clearInterval(id);
+  }, [refreshers, interval]);
+}
+
+export function useCourses(user) {
+  const [courses, setCourses] = useState([]);
+  const refresh = async () => setCourses(await db.getCourses(user));
+  useEffect(() => { if (user) refresh(); }, [user]);
+  return {
+    courses,
+    refresh,
+    handleAdd: async d => { await db.addCourse(d); await refresh(); },
+    handleUpdate: async (id, d) => { await db.updateCourse(id, d); await refresh(); },
+    handleDelete: async id => { await db.deleteCourse(id); await refresh(); },
+    handleEnroll: async (cId, sId) => { await db.enrollStudent(cId, sId); await refresh(); },
+    handleUnenroll: async (cId, sId) => { await db.unenrollStudent(cId, sId); await refresh(); }
+  };
+}
+
 export function useOnClickOutside(ref, handler) {
   useEffect(() => {
     const listener = (e) => { if (!ref.current || ref.current.contains(e.target)) return; handler(e); };

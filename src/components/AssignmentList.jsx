@@ -1,67 +1,79 @@
 import React from 'react';
+import { Calendar, CheckCircle2, Clock, Trash2, Edit3, AlertCircle } from 'lucide-react';
 import dayjs from 'dayjs';
-import { AlertTriangle, CalendarClock, CheckCircle2, Circle, CircleDashed, Clock, Edit3, FileText, Trash2 } from 'lucide-react';
-
-const formatDeadline = (d) => d ? dayjs(d).isValid() ? dayjs(d).format('MMM D, YYYY • h:mm A') : String(d) : '—';
-
-const formatTimeDiff = (deadline) => {
-  if (!deadline) return null;
-  const due = dayjs(deadline);
-  if (!due.isValid()) return null;
-  const mins = due.diff(dayjs(), 'minute');
-  const isPast = mins < 0;
-  const absMins = Math.abs(mins);
-  const d = Math.floor(absMins / 1440), h = Math.floor((absMins % 1440) / 60), m = absMins % 60;
-  const parts = [d && `${d}d`, h && `${h}h`, !d && !h && `${m}m`].filter(Boolean);
-  return `${isPast ? 'Overdue by' : 'Due in'} ${parts.join(' ')}`;
-};
-
-const PRIORITY = {
-  High: { cls: 'bg-red-50 text-red-700 ring-red-200', icon: AlertTriangle },
-  Medium: { cls: 'bg-orange-50 text-orange-700 ring-orange-200', icon: Clock },
-  Low: { cls: 'bg-green-50 text-green-700 ring-green-200', icon: Circle }
-};
 
 export default function AssignmentList({ assignments, onEdit, onDelete, onToggleComplete }) {
-  if (!assignments?.length) return (
-    <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center dark:border-gray-800 dark:bg-gray-950">
-      <p className="text-sm font-extrabold text-gray-900 dark:text-gray-100">No assignments yet</p>
-      <p className="mt-1 text-sm font-semibold text-gray-600 dark:text-gray-400">Add one above to start tracking deadlines and reminders.</p>
-    </div>
-  );
+  if (!assignments.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
+        <div className="p-5 rounded-full bg-gray-50 dark:bg-gray-900 mb-4">
+          <CheckCircle2 size={48} />
+        </div>
+        <p className="text-lg font-black italic">No active tasks</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-3">
-      {assignments.map((a) => {
-        const deadline = a.deadline ? dayjs(a.deadline) : null;
-        const overdue = deadline?.isValid() && deadline.isBefore(dayjs()) && a.status !== 'Completed';
-        const isDone = a.status === 'Completed';
-        const p = PRIORITY[a.priority] || PRIORITY.Medium;
-        const timeDiff = formatTimeDiff(a.deadline);
+    <div className="grid gap-3">
+      {assignments.map(a => {
+        const isOverdue = a.deadline && dayjs(a.deadline).isBefore(dayjs()) && a.status !== 'Completed';
+        const isCompleted = a.status === 'Completed';
 
         return (
-          <div key={a.id} className={`rounded-2xl border bg-white p-4 shadow-lg dark:bg-gray-950 ${overdue ? 'border-red-200 dark:border-red-900/40' : 'border-gray-100 dark:border-gray-800'}`}>
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center justify-center rounded-xl bg-blue-50 p-2 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200"><FileText size={18} /></span>
-                  <h3 className="truncate text-base font-extrabold text-gray-900 dark:text-gray-100">{a.title}</h3>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-extrabold ring-1 ${p.cls}`}><p.icon size={14} />{a.priority || 'Medium'}</span>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${isDone ? 'bg-green-600 text-white' : 'bg-blue-800 text-white'}`}>
-                    {isDone ? <CheckCircle2 size={14} /> : <CircleDashed size={14} />} {a.status}
+          <div key={a.id} className="group relative flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-950">
+            <div className="flex items-start justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase ${
+                    a.priority === 'High' ? 'bg-red-50 text-red-600' : 
+                    a.priority === 'Medium' ? 'bg-orange-50 text-orange-600' : 
+                    'bg-blue-50 text-blue-600'
+                  }`}>
+                    {a.priority} Priority
                   </span>
+                  {isOverdue && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-100 text-red-700 text-[9px] font-black uppercase animate-pulse">
+                      <AlertCircle size={10} /> Overdue
+                    </span>
+                  )}
                 </div>
-                <div className="mt-2 grid grid-cols-1 gap-2 text-sm text-gray-700 md:grid-cols-2">
-                  <div className="font-semibold dark:text-gray-300"><span className="font-extrabold text-gray-900 dark:text-gray-100">Subject:</span> {a.subject || '—'}</div>
-                  <div className="font-semibold dark:text-gray-300"><span className="inline-flex items-center gap-1 font-extrabold text-gray-900 dark:text-gray-100"><CalendarClock size={16} /> Deadline:</span> <span className="italic">{formatDeadline(a.deadline)}</span></div>
-                </div>
-                {a.description && <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{a.description}</p>}
-                {timeDiff && <p className={`mt-2 text-xs font-semibold ${overdue ? 'text-red-700' : 'text-gray-700 dark:text-gray-400'}`}>{timeDiff}</p>}
+                <h3 className={`truncate text-base font-black ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100'}`}>
+                  {a.title}
+                </h3>
+                <p className="mt-1 text-xs font-semibold text-gray-500 line-clamp-2">{a.description}</p>
               </div>
-              <div className="flex shrink-0 items-center gap-2 self-start">
-                <button onClick={() => onToggleComplete?.(a)} className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-extrabold shadow-sm transition hover:scale-[1.02] ${isDone ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100' : 'bg-green-600 text-white'}`}><CheckCircle2 size={16} />{isDone ? 'Undo' : 'Done'}</button>
-                <button onClick={() => onEdit(a)} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-extrabold text-gray-800 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"><Edit3 size={16} />Edit</button>
-                <button onClick={() => onDelete(a.id)} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-red-700"><Trash2 size={16} /></button>
+              <button 
+                onClick={() => onToggleComplete(a)}
+                className={`flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-200 ${
+                  isCompleted ? 'bg-green-100 text-green-600' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 dark:bg-gray-900'
+                }`}
+              >
+                <CheckCircle2 size={20} />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-50 dark:border-gray-900">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400">
+                  <Calendar size={14} />
+                  <span>{a.deadline ? dayjs(a.deadline).format('MMM D, YYYY') : 'No deadline'}</span>
+                </div>
+                {a.subject && (
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400">
+                    <Clock size={14} />
+                    <span>{a.subject}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-1">
+                {onEdit && (
+                  <button onClick={() => onEdit(a)} className="p-2 text-gray-400 hover:text-brand transition-colors"><Edit3 size={16} /></button>
+                )}
+                {onDelete && (
+                  <button onClick={() => onDelete(a.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                )}
               </div>
             </div>
           </div>

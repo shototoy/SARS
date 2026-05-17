@@ -1,221 +1,57 @@
-import { Capacitor } from '@capacitor/core';
-import { Preferences } from '@capacitor/preferences';
-import { CapacitorSQLite, SQLiteConnection } from '@capacitor-community/sqlite';
-import dayjs from 'dayjs';
+import { apiFetch } from './api';
 
-const PREFERENCES_KEY = 'sars.assignments.v1';
+const UPLOAD_BASE = 'http://127.0.0.1:5001/uploads';
 
-let nativeDbPromise;
-
-function normalizeAssignmentInput(data) {
-  const rawStatus = data.status || 'Pending';
-  const status = rawStatus === 'Completed' ? 'Completed' : 'Pending';
-  return {
-    title: String(data.title || '').trim(),
-    subject: String(data.subject || '').trim(),
-    description: String(data.description || '').trim(),
-    deadline: data.deadline ? String(data.deadline) : null,
-    priority: data.priority || 'Medium',
-    status,
-    // Reminders are an app-level feature (not user-configurable per assignment).
-    reminderEnabled: true,
-    remindBeforeMinutes: 1440,
-  };
+export function profileImgUrl(username) {
+  if (!username) return '';
+  return `${UPLOAD_BASE}/profiles/${encodeURIComponent(username)}.png`;
 }
 
-function sortByDeadlineAscending(assignments) {
-  return [...assignments].sort((a, b) => {
-    const aValue = a.deadline ? dayjs(a.deadline).valueOf() : Number.POSITIVE_INFINITY;
-    const bValue = b.deadline ? dayjs(b.deadline).valueOf() : Number.POSITIVE_INFINITY;
-    return aValue - bValue;
+export function announcementImgUrl(title) {
+  if (!title) return '';
+  return `${UPLOAD_BASE}/announcements/${encodeURIComponent(title)}.png`;
+}
+
+export async function uploadAnnouncementPhoto(file, title) {
+  const formData = new FormData();
+  formData.append('announcement', file);
+  const res = await fetch(`/api/upload/announcement?title=${encodeURIComponent(title)}`, {
+    method: 'POST',
+    body: formData,
   });
+  return await res.json();
 }
 
-function generateWebId(existingAssignments) {
-  const maxId = existingAssignments.reduce((max, a) => (typeof a.id === 'number' ? Math.max(max, a.id) : max), 0);
-  return maxId + 1;
+export async function uploadDocumentFile(file, name) {
+  const formData = new FormData();
+  formData.append('document', file);
+  const url = name ? `/api/upload/document?name=${encodeURIComponent(name)}` : '/api/upload/document';
+  const res = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  });
+  return await res.json();
 }
 
-async function loadAssignmentsFromPreferences() {
-  const { value } = await Preferences.get({ key: PREFERENCES_KEY });
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
+export const getAssignments = () => apiFetch('/assignments');
+export const addAssignment = (d) => apiFetch('/assignments', { method: 'POST', body: JSON.stringify(d) });
+export const updateAssignment = (id, d) => apiFetch(`/assignments/${id}`, { method: 'PUT', body: JSON.stringify(d) });
+export const deleteAssignment = (id) => apiFetch(`/assignments/${id}`, { method: 'DELETE' });
 
-async function saveAssignmentsToPreferences(assignments) {
-  await Preferences.set({ key: PREFERENCES_KEY, value: JSON.stringify(assignments) });
-}
+export const getAnnouncements = (u) => apiFetch(`/announcements?id=${u?.id}&role=${u?.role}`);
+export const addAnnouncement = (d) => apiFetch('/announcements', { method: 'POST', body: JSON.stringify(d) });
 
-async function migrateAssignmentsTable(db) {
-  const maybeAddColumn = async (name, definition) => {
-    try {
-      await db.execute(`ALTER TABLE assignments ADD COLUMN ${name} ${definition}`);
-    } catch {
-      // ignore (already exists)
-    }
-  };
+export const getDocuments = (u) => apiFetch(`/documents?id=${u?.id}&role=${u?.role}&username=${u?.username}`);
+export const addDocument = (d) => apiFetch('/documents', { method: 'POST', body: JSON.stringify(d) });
+export const deleteDocument = (id, authorId) => apiFetch(`/documents/${id}?authorId=${authorId}`, { method: 'DELETE' });
 
-  await maybeAddColumn('reminderEnabled', 'INTEGER DEFAULT 0');
-  await maybeAddColumn('remindBeforeMinutes', 'INTEGER DEFAULT 1440');
-  await maybeAddColumn('reminderId', 'INTEGER');
-}
+export const getMessages = (id) => apiFetch(`/messages/${id}`);
+export const sendMessage = (m) => apiFetch('/messages', { method: 'POST', body: JSON.stringify(m) });
 
-async function ensureUsersTable(db) {
-  await db.execute(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password TEXT,
-    pin TEXT,
-    createdAt TEXT
-  )`);
-
-  try {
-    await db.execute('ALTER TABLE users ADD COLUMN password TEXT');
-  } catch {
-    // ignore
-  }
-
-  try {
-    await db.execute('ALTER TABLE users ADD COLUMN pin TEXT');
-  } catch {
-    // ignore
-  }
-
-  try {
-    await db.execute(`UPDATE users SET password=pin WHERE (password IS NULL OR password='') AND pin IS NOT NULL`);
-  } catch {
-    // ignore
-  }
-}
-
-export async function getDb() {
-  if (!Capacitor.isNativePlatform()) {
-    throw new Error('SQLite is only available on native platforms. Use Preferences fallback on web.');
-  }
-
-  if (!nativeDbPromise) {
-    nativeDbPromise = (async () => {
-      const sqlite = new SQLiteConnection(CapacitorSQLite);
-      const db = await sqlite.createConnection('sars', false, 'no-encryption', 1);
-      await db.open();
-      await db.execute(`CREATE TABLE IF NOT EXISTS assignments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        subject TEXT,
-        description TEXT,
-        deadline TEXT,
-        priority TEXT,
-        status TEXT,
-        reminderEnabled INTEGER DEFAULT 0,
-        remindBeforeMinutes INTEGER DEFAULT 1440,
-        reminderId INTEGER
-      )`);
-      await migrateAssignmentsTable(db);
-      await ensureUsersTable(db);
-      return db;
-    })();
-  }
-
-  return nativeDbPromise;
-}
-
-export async function getAssignments() {
-  if (Capacitor.isNativePlatform()) {
-    try {
-      const db = await getDb();
-      const res = await db.query('SELECT * FROM assignments ORDER BY deadline ASC');
-      return res.values || [];
-    } catch {
-      // Fall back to Preferences below.
-    }
-  }
-
-  const assignments = await loadAssignmentsFromPreferences();
-  return sortByDeadlineAscending(assignments);
-}
-
-export async function addAssignment(data) {
-  const normalized = normalizeAssignmentInput(data);
-
-  if (Capacitor.isNativePlatform()) {
-    try {
-      const db = await getDb();
-      await db.run(
-        `INSERT INTO assignments (title, subject, description, deadline, priority, status, reminderEnabled, remindBeforeMinutes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          normalized.title,
-          normalized.subject,
-          normalized.description,
-          normalized.deadline,
-          normalized.priority,
-          normalized.status,
-          normalized.reminderEnabled ? 1 : 0,
-          normalized.remindBeforeMinutes,
-        ]
-      );
-      return;
-    } catch {
-      // Fall back to Preferences below.
-    }
-  }
-
-  const assignments = await loadAssignmentsFromPreferences();
-  const id = generateWebId(assignments);
-  const created = { id, ...normalized, reminderId: null };
-  const next = sortByDeadlineAscending([...assignments, created]);
-  await saveAssignmentsToPreferences(next);
-}
-
-export async function updateAssignment(id, data) {
-  const normalized = normalizeAssignmentInput(data);
-
-  if (Capacitor.isNativePlatform()) {
-    try {
-      const db = await getDb();
-      await db.run(
-        `UPDATE assignments SET title=?, subject=?, description=?, deadline=?, priority=?, status=?, reminderEnabled=?, remindBeforeMinutes=? WHERE id=?`,
-        [
-          normalized.title,
-          normalized.subject,
-          normalized.description,
-          normalized.deadline,
-          normalized.priority,
-          normalized.status,
-          normalized.reminderEnabled ? 1 : 0,
-          normalized.remindBeforeMinutes,
-          id,
-        ]
-      );
-      return;
-    } catch {
-      // Fall back to Preferences below.
-    }
-  }
-
-  const assignments = await loadAssignmentsFromPreferences();
-  const next = sortByDeadlineAscending(
-    assignments.map((a) => (a.id === id ? { ...a, ...normalized } : a))
-  );
-  await saveAssignmentsToPreferences(next);
-}
-
-export async function deleteAssignment(id) {
-  if (Capacitor.isNativePlatform()) {
-    try {
-      const db = await getDb();
-      await db.run('DELETE FROM assignments WHERE id=?', [id]);
-      return;
-    } catch {
-      // Fall back to Preferences below.
-    }
-  }
-
-  const assignments = await loadAssignmentsFromPreferences();
-  const next = assignments.filter((a) => a.id !== id);
-  await saveAssignmentsToPreferences(next);
-}
+export const getCourses = (u) => !u ? apiFetch('/courses') : apiFetch(`/courses?id=${u.id}&role=${u.role}`);
+export const getCourseDetails = (id) => apiFetch(`/courses/${id}`);
+export const addCourse = (d) => apiFetch('/courses', { method: 'POST', body: JSON.stringify(d) });
+export const updateCourse = (id, d) => apiFetch(`/courses/${id}`, { method: 'PUT', body: JSON.stringify(d) });
+export const deleteCourse = (id) => apiFetch(`/courses/${id}`, { method: 'DELETE' });
+export const enrollStudent = (courseId, studentId) => apiFetch('/courses/enroll', { method: 'POST', body: JSON.stringify({ courseId, studentId }) });
+export const unenrollStudent = (courseId, studentId) => apiFetch(`/courses/enroll/${courseId}/${studentId}`, { method: 'DELETE' });
