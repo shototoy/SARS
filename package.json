@@ -10,7 +10,13 @@
     "preview": "vite preview",
     "cap:add:android": "cap add android",
     "cap:sync": "cap sync",
-    "cap:open:android": "cap open android"
+    "cap:open:android": "cap open android",
+    "db:create": "npm --prefix backend run create-db",
+    "db:reset": "npm --prefix backend run reset-db",
+    "db:seed": "npm --prefix backend run seed",
+    "create-db": "npm --prefix backend run create-db",
+    "reset-db": "npm --prefix backend run reset-db",
+    "seed-db": "npm --prefix backend run seed"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
