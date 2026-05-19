@@ -25,6 +25,5 @@ dist-ssr
 *.env
 
 # Local upload files
-backend/uploads
-backend/uploads/*
+
 backend/.env
