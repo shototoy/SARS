@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const http = require('http');
+const WebSocket = require('ws');
 require('dotenv').config();
 
 const db = require('./config/db');
@@ -76,7 +78,7 @@ const uploadDocument = multer({ storage: documentStorage });
 
 app.post('/api/upload/document', uploadDocument.single('document'), (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-  res.json({ 
+  res.json({
     filename: req.file.filename,
     size: req.file.size,
     mimetype: req.file.mimetype
@@ -118,13 +120,38 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
 
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+global.wsClients = new Map();
+
+wss.on('connection', (ws) => {
+  let registeredUserId = null;
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      if (data.type === 'register' && data.userId) {
+        registeredUserId = data.userId;
+        global.wsClients.set(Number(data.userId), ws);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  });
+  ws.on('close', () => {
+    if (registeredUserId) {
+      global.wsClients.delete(Number(registeredUserId));
+    }
+  });
+});
+
 async function start() {
   try {
     await db.query('SELECT 1');
     console.log('[DB] Connected successfully');
-    app.listen(PORT, '0.0.0.0', () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`[SERVER] Running locally on http://127.0.0.1:${PORT}`);
-      
+
       const interfaces = os.networkInterfaces();
       for (const name of Object.keys(interfaces)) {
         for (const iface of interfaces[name]) {

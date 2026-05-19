@@ -9,8 +9,7 @@ const ALARM_BURST_COUNT = 6;
 const ALARM_BURST_STEP_SECONDS = 5;
 const UPCOMING_SLOT_ID_STRIDE = 10;
 const UPCOMING_SLOT_ID_CAPACITY = 100;
-// Android channels are immutable after creation (sound/importance cannot be changed).
-// Bump the id when we change behavior so users get correct sound + heads-up.
+
 const REMINDER_CHANNEL_ID = 'sars-reminders-v3';
 const ALARM_CHANNEL_ID = 'sars-alarms-v1';
 const TEST_NOTIFICATION_BASE_ID = 9_999_900;
@@ -29,7 +28,7 @@ function withTimeout(promise, ms, label) {
 }
 
 async function ensureNotificationChannels(plugin) {
-  // Standard reminders channel.
+
   try {
     await withTimeout(
       plugin.createChannel({
@@ -46,10 +45,9 @@ async function ensureNotificationChannels(plugin) {
       'create reminders channel'
     );
   } catch {
-    // ignore
+
   }
 
-  // Urgent alarm-style channel for due/overdue/test alerts.
   try {
     await withTimeout(
       plugin.createChannel({
@@ -66,7 +64,7 @@ async function ensureNotificationChannels(plugin) {
       'create alarms channel'
     );
   } catch {
-    // ignore
+
   }
 }
 
@@ -148,7 +146,7 @@ export async function testLocalNotifications({ secondsFromNow = 5 } = {}) {
   try {
     permission = await withTimeout(plugin.checkPermissions(), 4000, 'checkPermissions');
   } catch {
-    // ignore and fall back to requestPermissions
+
   }
 
   const beforeDisplay =
@@ -175,7 +173,7 @@ export async function testLocalNotifications({ secondsFromNow = 5 } = {}) {
     addBurstCancelIds(toCancel, TEST_NOTIFICATION_BASE_ID, ALARM_BURST_COUNT);
     await withTimeout(plugin.cancel({ notifications: toCancel }), 4000, 'cancel test');
   } catch {
-    // ignore
+
   }
 
   try {
@@ -209,7 +207,7 @@ export async function testLocalNotifications({ secondsFromNow = 5 } = {}) {
     const res = await withTimeout(plugin.getPending(), 4000, 'getPending');
     pending = res?.notifications?.length ?? null;
   } catch {
-    // ignore
+
   }
 
   return {
@@ -227,7 +225,7 @@ export async function testLocalNotifications({ secondsFromNow = 5 } = {}) {
 }
 
 function legacyReminderIdForAssignment(assignmentId) {
-  // Back-compat: older builds used a single reminder id per assignment.
+
   const numeric = Number(assignmentId);
   if (!Number.isFinite(numeric)) return null;
   return 1_000_000 + Math.abs(Math.trunc(numeric));
@@ -313,7 +311,7 @@ function shouldScheduleOverdueNudge(assignment) {
   if (assignment?.status === 'Completed') return false;
   const deadline = dayjs(assignment.deadline);
   if (!deadline.isValid()) return false;
-  // If it's already overdue, the daily overdue reminder handles it.
+
   if (!deadline.isAfter(dayjs())) return false;
   return true;
 }
@@ -345,7 +343,7 @@ export async function syncAssignmentReminders(assignments, previousAssignmentIds
   if (!plugin) return;
 
   const permission = await plugin.requestPermissions();
-  // Capacitor may return different shapes across platforms; be permissive.
+
   const display = permission?.display ?? permission?.notifications ?? permission?.receive;
   if (display && display !== 'granted') return;
 
@@ -384,7 +382,7 @@ export async function syncAssignmentReminders(assignments, previousAssignmentIds
 
     const base = slotBaseForAssignment(a.id);
     if (base != null) {
-      // Always cancel first, then schedule what we need (avoids stale/duplicate slots).
+
       for (let i = 0; i < UPCOMING_SLOT_ID_CAPACITY; i += 1) toCancel.push({ id: base + i });
     }
     const legacyBase = legacySlotBaseForAssignment(a.id);
@@ -412,7 +410,7 @@ export async function syncAssignmentReminders(assignments, previousAssignmentIds
     try {
       await plugin.cancel({ notifications: toCancel });
     } catch {
-      // ignore
+
     }
   }
 
@@ -471,8 +469,6 @@ export async function syncAssignmentReminders(assignments, previousAssignmentIds
     );
   }
 
-  // Fallback: if the exact "due now" moment is missed by the OS (battery optimizations / exact alarm),
-  // post an "overdue" nudge shortly after the deadline.
   for (const a of assignments) {
     if (!shouldScheduleOverdueNudge(a)) continue;
     const deadline = dayjs(a.deadline);
@@ -501,12 +497,10 @@ export async function syncAssignmentReminders(assignments, previousAssignmentIds
     try {
       await plugin.schedule({ notifications: toSchedule });
     } catch {
-      // ignore
+
     }
   }
 
-  // Hybrid: long-term reminders are scheduled with the OS, and when tasks become overdue
-  // we also set a repeating daily nudge (the app re-syncs this on next launch/update).
   if (overdueCount > 0) {
     const at = nextOverdueDailyAt();
     try {
@@ -524,7 +518,7 @@ export async function syncAssignmentReminders(assignments, previousAssignmentIds
         ],
       });
     } catch {
-      // ignore
+
     }
   }
 }

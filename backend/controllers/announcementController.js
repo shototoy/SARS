@@ -8,7 +8,7 @@ exports.getAnnouncements = async (req, res) => {
 
     if (role === 'student') {
       query = `
-        SELECT a.*, c.code as course_code, c.name as course_name 
+        SELECT a.*, c.code as course_code, c.name as course_name
         FROM announcements a
         LEFT JOIN courses c ON a.target_course_id = c.id
         LEFT JOIN course_students cs ON a.target_course_id = cs.course_id
@@ -17,7 +17,7 @@ exports.getAnnouncements = async (req, res) => {
       params = [id];
     } else if (role === 'faculty') {
       query = `
-        SELECT a.*, c.code as course_code, c.name as course_name 
+        SELECT a.*, c.code as course_code, c.name as course_name
         FROM announcements a
         LEFT JOIN courses c ON a.target_course_id = c.id
         WHERE a.target_course_id IS NULL OR a.author_id = ?
@@ -25,7 +25,7 @@ exports.getAnnouncements = async (req, res) => {
       params = [id];
     } else {
       query = `
-        SELECT a.*, c.code as course_code, c.name as course_name 
+        SELECT a.*, c.code as course_code, c.name as course_name
         FROM announcements a
         LEFT JOIN courses c ON a.target_course_id = c.id
       `;

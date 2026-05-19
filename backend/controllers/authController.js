@@ -48,15 +48,15 @@ exports.updateProfile = async (req, res) => {
   try {
     let query = 'UPDATE users SET username = ?, full_name = ?';
     let params = [username, full_name];
-    
+
     if (password) {
       query += ', password = ?';
       params.push(password);
     }
-    
+
     query += ' WHERE id = ?';
     params.push(id);
-    
+
     await db.execute(query, params);
     const [rows] = await db.execute('SELECT id, username, full_name, role FROM users WHERE id = ?', [id]);
     res.json(rows[0]);

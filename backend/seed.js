@@ -10,16 +10,16 @@ async function seed() {
     for (const t of tables) await db.execute(`TRUNCATE TABLE ${t}`);
     await db.execute('SET FOREIGN_KEY_CHECKS = 1');
 
-    await db.execute("INSERT INTO users (username, full_name, password, role) VALUES " + 
+    await db.execute("INSERT INTO users (username, full_name, password, role) VALUES " +
       "('admin', 'Campus Administrator', 'admin123', 'admin'), " +
       "('faculty', 'Prof. Roberto Garcia', 'faculty123', 'faculty'), " +
       "('student', 'Mark Angelo Silvestre', 'student123', 'student'), " +
       "('student2', 'Maria Clara Dela Cruz', 'student123', 'student'), " +
       "('student3', 'James Bryan Pineda', 'student123', 'student')");
-    
+
     const [users] = await db.execute('SELECT * FROM users');
-    const admin = users.find(u => u.role === 'admin'), 
-          faculty = users.find(u => u.role === 'faculty'), 
+    const admin = users.find(u => u.role === 'admin'),
+          faculty = users.find(u => u.role === 'faculty'),
           student = users.find(u => u.role === 'student'),
           student2 = users.find(u => u.username === 'student2'),
           student3 = users.find(u => u.username === 'student3');
@@ -28,12 +28,12 @@ async function seed() {
     await db.execute("INSERT INTO courses (name, code, faculty_id) VALUES ('Mobile Development', 'CS302', ?)", [faculty.id]);
     await db.execute("INSERT INTO courses (name, code, faculty_id) VALUES ('Cloud Computing', 'CS303', ?)", [faculty.id]);
     await db.execute("INSERT INTO courses (name, code, faculty_id) VALUES ('Information Security', 'CS304', ?)", [faculty.id]);
-    
+
     const [[course]] = await db.execute('SELECT id FROM courses WHERE code = "CS301"');
     const [[course2]] = await db.execute('SELECT id FROM courses WHERE code = "CS302"');
     const [[course3]] = await db.execute('SELECT id FROM courses WHERE code = "CS303"');
     const [[course4]] = await db.execute('SELECT id FROM courses WHERE code = "CS304"');
-    
+
     await db.execute("INSERT INTO course_students (course_id, student_id) VALUES (?, ?)", [course.id, student.id]);
     await db.execute("INSERT INTO course_students (course_id, student_id) VALUES (?, ?)", [course.id, student2.id]);
     await db.execute("INSERT INTO course_students (course_id, student_id) VALUES (?, ?)", [course2.id, student.id]);

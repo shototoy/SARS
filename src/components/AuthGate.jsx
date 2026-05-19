@@ -37,7 +37,7 @@ export default function AuthGate({ booting, onAuthed, logoUrl, backgroundUrl }) 
     if (!targetEl) return;
     const end = targetEl.getBoundingClientRect();
     if (!end.width || !end.height) return;
-    
+
     const start = computeStartRectForEnd(end);
     const endCx = end.left + end.width / 2;
     const endCy = end.top + end.height / 2;
@@ -47,7 +47,7 @@ export default function AuthGate({ booting, onAuthed, logoUrl, backgroundUrl }) 
     const dy = startCy - endCy;
 
     setLogoFixed({ left: Math.round(end.left), top: Math.round(end.top), width: Math.round(end.width), height: Math.round(end.height) });
-    // Start at size 0 (scale 0) and centered (dx, dy)
+
     setLogoTransform(`translate(${dx}px, ${dy}px) scale(0)`);
     setOverlayVisible(true);
   }, [phase]);
@@ -55,18 +55,17 @@ export default function AuthGate({ booting, onAuthed, logoUrl, backgroundUrl }) 
   useEffect(() => {
     if (booting) return;
     if (phase !== 'splash') return;
-    
-    // Begin Reveal Animation
+
     setPhase('reveal');
-    rafRef.current = window.requestAnimationFrame(() => { 
-      setLogoTransform('translate(0px, 0px) scale(1)'); 
-      rafRef.current = null; 
+    rafRef.current = window.requestAnimationFrame(() => {
+      setLogoTransform('translate(0px, 0px) scale(1)');
+      rafRef.current = null;
     });
 
-    const t = window.setTimeout(() => { 
-      setPhase('done'); 
-      setOverlayVisible(false); 
-    }, 1000); // Slightly longer for the more complex animation
+    const t = window.setTimeout(() => {
+      setPhase('done');
+      setOverlayVisible(false);
+    }, 1000);
     return () => window.clearTimeout(t);
   }, [booting, phase]);
 
@@ -78,7 +77,7 @@ export default function AuthGate({ booting, onAuthed, logoUrl, backgroundUrl }) 
   return (
     <div className="relative flex h-[100dvh] w-full items-center justify-center bg-gray-50 px-4 text-gray-900 dark:bg-gray-950 dark:text-gray-100 font-outfit overflow-hidden">
       <AppBackground imageUrl={backgroundUrl} opacity={phase === 'splash' ? 1 : 0.3} blur={phase === 'splash' ? 0 : 4} />
-      
+
       <style>{`
         @keyframes cc-indeterminate {
           0% { transform: translateX(-100%); }
@@ -107,15 +106,15 @@ export default function AuthGate({ booting, onAuthed, logoUrl, backgroundUrl }) 
 
       {overlayVisible && logoFixed && (
         <div className="pointer-events-none fixed z-20" style={{ left: logoFixed.left, top: logoFixed.top, width: logoFixed.width, height: logoFixed.height }}>
-          <img 
-            src={logoUrl} 
-            alt="" 
-            className="h-full w-full rounded-[40px] object-contain shadow-2xl will-change-transform" 
-            style={{ 
-              transformOrigin: 'center', 
-              transform: logoTransform, 
-              transition: phase === 'splash' ? 'none' : 'transform 1000ms cubic-bezier(0.34, 1.56, 0.64, 1)' 
-            }} 
+          <img
+            src={logoUrl}
+            alt=""
+            className="h-full w-full rounded-[40px] object-contain shadow-2xl will-change-transform"
+            style={{
+              transformOrigin: 'center',
+              transform: logoTransform,
+              transition: phase === 'splash' ? 'none' : 'transform 1000ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+            }}
           />
         </div>
       )}

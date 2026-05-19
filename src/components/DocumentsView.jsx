@@ -14,8 +14,8 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
     setExpandedFolders(prev => ({ ...prev, [folder]: !prev[folder] }));
   };
 
-  const filtered = documents.filter(d => 
-    d.name.toLowerCase().includes(search.toLowerCase()) || 
+  const filtered = documents.filter(d =>
+    d.name.toLowerCase().includes(search.toLowerCase()) ||
     (d.folder_name && d.folder_name.toLowerCase().includes(search.toLowerCase()))
   );
 
@@ -35,20 +35,20 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
 
   return (
     <div className="flex h-full w-full flex-col gap-3 px-0 relative overflow-hidden">
-      {/* Search Header */}
+      {}
       <div className="flex items-center gap-3 px-4 shrink-0">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-          <input 
-            type="text" 
-            placeholder="Search repository..." 
+          <input
+            type="text"
+            placeholder="Search repository..."
             className="w-full rounded-2xl border border-gray-100 bg-white py-2.5 pl-9 pr-4 text-xs font-semibold outline-none focus:ring-2 dark:border-gray-800 dark:bg-gray-950"
             style={{ focusRingColor: colors.main }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <button 
+        <button
           onClick={() => setShowUploadModal(true)}
           className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-lg transition hover:scale-105 active:scale-95"
           style={{ backgroundColor: colors.main }}
@@ -57,15 +57,15 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
         </button>
       </div>
 
-      {/* Folders Accordion */}
+      {}
       <div className="flex-1 overflow-auto pb-4 px-4 scrollbar-hide">
         <div className="flex flex-col w-full space-y-3">
           {Object.entries(grouped).map(([folder, docs]) => {
             const isExpanded = expandedFolders[folder] !== false;
             return (
               <div key={folder} className="w-full overflow-hidden rounded-[22px] border border-gray-50 bg-white shadow-sm dark:border-gray-900 dark:bg-gray-950">
-                {/* Accordion Header - COMPACT */}
-                <button 
+                {}
+                <button
                   onClick={() => toggleFolder(folder)}
                   className="flex w-full items-center justify-between p-3.5 hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-colors"
                 >
@@ -85,7 +85,7 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
                   </div>
                 </button>
 
-                {/* Accordion Content - COMPACT ROWS */}
+                {}
                 <div className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                   <div className="flex flex-col w-full divide-y divide-gray-50 dark:divide-gray-900 border-t border-gray-50 dark:border-gray-900">
                     {docs.map(doc => (
@@ -103,9 +103,9 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 shrink-0">
-                          <button 
+                          <button
                             onClick={() => handleDownload(doc)}
                             className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 transition-all hover:scale-110 active:scale-95"
                             title="Download"
@@ -113,7 +113,7 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
                             <Download size={14} />
                           </button>
                           {doc.author_id === user.id && (
-                            <button 
+                            <button
                               onClick={() => setDeleteConfirm(doc)}
                               className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:bg-gray-900 transition-all opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95"
                               title="Delete"
@@ -132,7 +132,7 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
         </div>
       </div>
 
-      {/* Upload Modal */}
+      {}
       {showUploadModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowUploadModal(false)} />
@@ -143,7 +143,7 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
                  <label className="text-[10px] font-black uppercase text-gray-400">File Name</label>
                  <input id="up-name" className="w-full rounded-2xl border border-gray-100 p-3 text-sm font-bold outline-none dark:border-gray-800 dark:bg-gray-900" placeholder="e.g. Midterm Syllabus" />
                </div>
-               
+
                <div className="space-y-1">
                  <label className="text-[10px] font-black uppercase text-gray-400">Folder</label>
                  <select id="up-folder" className="w-full rounded-2xl border border-gray-100 p-3 text-sm font-bold outline-none dark:border-gray-800 dark:bg-gray-900">
@@ -171,13 +171,13 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
             </div>
 
             <div className="mt-8 flex gap-3">
-              <button 
+              <button
                 onClick={() => setShowUploadModal(false)}
                 className="flex-1 rounded-2xl bg-gray-50 py-4 text-xs font-black uppercase tracking-widest text-gray-400 dark:bg-gray-900"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => {
                   const name = document.getElementById('up-name').value;
                   const folderName = document.getElementById('up-folder').value;
@@ -196,7 +196,7 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {}
       {deleteConfirm && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
@@ -209,15 +209,15 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
               <p className="mt-2 text-sm font-bold text-gray-500 leading-relaxed">
                 You are about to delete <span className="text-gray-900 dark:text-gray-100">"{deleteConfirm.name}"</span>. This action cannot be undone.
               </p>
-              
+
               <div className="mt-8 flex w-full gap-3">
-                <button 
+                <button
                   onClick={() => setDeleteConfirm(null)}
                   className="flex-1 rounded-2xl bg-gray-50 py-4 text-xs font-black uppercase tracking-widest text-gray-400 dark:bg-gray-900"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={() => { onDelete(deleteConfirm.id); setDeleteConfirm(null); }}
                   className="flex-1 rounded-2xl bg-red-500 py-4 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-red-500/30 hover:bg-red-600 active:scale-95 transition-all"
                 >
@@ -229,7 +229,7 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
         </div>
       )}
 
-      {/* Download Success Toast */}
+      {}
       {downloadInfo && (
         <div className="fixed bottom-6 right-6 z-[120] flex items-center gap-3 rounded-2xl bg-white p-4 shadow-2xl border border-gray-100 dark:bg-gray-950 dark:border-gray-800 animate-in slide-in-from-right-10 duration-300">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-500 dark:bg-green-950/30">

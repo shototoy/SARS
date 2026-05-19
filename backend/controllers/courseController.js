@@ -5,13 +5,13 @@ exports.getCourses = async (req, res) => {
   try {
     let query = 'SELECT c.*, u.username as faculty_name FROM courses c LEFT JOIN users u ON c.faculty_id = u.id';
     let params = [];
-    
+
     if (role === 'student') {
       query = `
-        SELECT c.*, u.username as faculty_name 
-        FROM courses c 
-        JOIN course_students cs ON c.id = cs.course_id 
-        LEFT JOIN users u ON c.faculty_id = u.id 
+        SELECT c.*, u.username as faculty_name
+        FROM courses c
+        JOIN course_students cs ON c.id = cs.course_id
+        LEFT JOIN users u ON c.faculty_id = u.id
         WHERE cs.student_id = ?
       `;
       params = [id];
@@ -19,7 +19,7 @@ exports.getCourses = async (req, res) => {
       query = 'SELECT c.*, u.username as faculty_name FROM courses c LEFT JOIN users u ON c.faculty_id = u.id WHERE c.faculty_id = ?';
       params = [id];
     }
-    
+
     const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (error) {
@@ -34,9 +34,9 @@ exports.getCourseDetails = async (req, res) => {
     if (!course) return res.status(404).json({ message: 'Course not found' });
 
     const [students] = await db.execute(`
-      SELECT u.id, u.username 
-      FROM users u 
-      JOIN course_students cs ON u.id = cs.student_id 
+      SELECT u.id, u.username
+      FROM users u
+      JOIN course_students cs ON u.id = cs.student_id
       WHERE cs.course_id = ?
     `, [id]);
 

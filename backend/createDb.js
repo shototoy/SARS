@@ -4,7 +4,7 @@ require('dotenv').config();
 async function createDb() {
   console.log('Setting up database and schema from the start...');
   const dbName = process.env.DB_NAME || 'campus_connect';
-  
+
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -14,9 +14,9 @@ async function createDb() {
   try {
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
     console.log(`Database '${dbName}' created or already exists.`);
-    
+
     await connection.query(`USE \`${dbName}\``);
-    
+
     await connection.query(`CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255) UNIQUE, full_name VARCHAR(255), password VARCHAR(255), role ENUM('admin', 'faculty', 'student'))`);
     await connection.query(`CREATE TABLE IF NOT EXISTS courses (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), code VARCHAR(50), faculty_id INT, FOREIGN KEY (faculty_id) REFERENCES users(id))`);
     await connection.query(`CREATE TABLE IF NOT EXISTS course_students (course_id INT, student_id INT, PRIMARY KEY(course_id, student_id), FOREIGN KEY (course_id) REFERENCES courses(id), FOREIGN KEY (student_id) REFERENCES users(id))`);

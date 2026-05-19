@@ -26,8 +26,8 @@ export default function AssignmentList({ assignments, onEdit, onDelete, onToggle
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase ${
-                    a.priority === 'High' ? 'bg-red-50 text-red-600' : 
-                    a.priority === 'Medium' ? 'bg-orange-50 text-orange-600' : 
+                    a.priority === 'High' ? 'bg-red-50 text-red-600' :
+                    a.priority === 'Medium' ? 'bg-orange-50 text-orange-600' :
                     'bg-blue-50 text-blue-600'
                   }`}>
                     {a.priority} Priority
@@ -43,7 +43,7 @@ export default function AssignmentList({ assignments, onEdit, onDelete, onToggle
                 </h3>
                 <p className="mt-1 text-xs font-semibold text-gray-500 line-clamp-2">{a.description}</p>
               </div>
-              <button 
+              <button
                 onClick={() => onToggleComplete(a)}
                 className={`flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-200 ${
                   isCompleted ? 'bg-green-100 text-green-600' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 dark:bg-gray-900'
@@ -66,7 +66,7 @@ export default function AssignmentList({ assignments, onEdit, onDelete, onToggle
                   </div>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-1">
                 {onEdit && (
                   <button onClick={() => onEdit(a)} className="p-2 text-gray-400 hover:text-brand transition-colors"><Edit3 size={16} /></button>

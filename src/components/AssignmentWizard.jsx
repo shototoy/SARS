@@ -54,8 +54,8 @@ export default function AssignmentWizard({ initialValues, mode, onCancel, onSubm
         </div>
 
         <div className="pt-4">
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black text-white shadow-xl transition hover:scale-[1.02] active:scale-95"
             style={{ backgroundColor: colors.main }}
           >

@@ -29,7 +29,7 @@ function App() {
   const [selectedChatUserId, setSelectedChatUserId] = useState(null);
 
   const colors = useTheme();
-  
+
   const { assignments, handleAdd: addAssign, handleUpdate: updateAssign, handleDelete: deleteAssign, handleToggleComplete, refresh: refreshAssign } = useAssignments(user);
   const { announcements, handleAdd: addAnn, refresh: refreshAnn } = useAnnouncements(user);
   const { messages, handleSend, refresh: refreshMsg } = useMessages(user);
@@ -39,11 +39,11 @@ function App() {
   const { courses, handleAdd: addCourse, handleUpdate: updateCourse, handleDelete: deleteCourse, handleEnroll, handleUnenroll, refresh: refreshCourses } = useCourses(user);
   const chromePx = useChromeMeasurement(user);
 
-  const { items: notifItems, newItems } = useNotifications(assignments, announcements, messages);
+  const { items: notifItems, newItems } = useNotifications(assignments, announcements, messages, user);
   const { addToast, requestPushPermission } = useToasts();
   const hasRequestedPush = useRef(false);
 
-  usePolling([refreshAssign, refreshAnn, refreshMsg, refreshUsers, refreshCourses], 10000);
+  usePolling([refreshAssign, refreshAnn, refreshUsers, refreshCourses], 10000);
 
   useEffect(() => {
     if (user && !hasRequestedPush.current) {
@@ -53,15 +53,17 @@ function App() {
   }, [user, requestPushPermission]);
 
   useEffect(() => {
+    if (!user) return;
     newItems.forEach(item => {
       addToast({
+        id: item.id,
         title: item.title,
         message: item.sub,
         type: item.kind === 'overdue' ? 'urgent' : item.kind === 'dueSoon' ? 'warning' : 'info',
         push: true
       });
     });
-  }, [newItems, addToast]);
+  }, [newItems, addToast, user]);
 
   const [modal, setModal] = useState({ type: null, mode: 'create', data: null });
 
@@ -94,13 +96,13 @@ function App() {
       if (activeTab === 'home') {
         if (user?.role === 'admin') return <CalendarView assignments={assignments} announcements={announcements} />;
         return (
-          <Dashboard 
-            user={user} 
+          <Dashboard
+            user={user}
             users={users}
-            announcements={announcements} 
-            messages={messages} 
-            onSendMessage={handleSend} 
-            courses={courses} 
+            announcements={announcements}
+            messages={messages}
+            onSendMessage={handleSend}
+            courses={courses}
             onNavigateToChat={(id) => {
               setSelectedChatUserId(id);
               navigateTab('messages');
@@ -110,10 +112,10 @@ function App() {
       }
       if (activeTab === 'messages') return (
         <div className="flex flex-col h-full min-h-0">
-          <MessagesView 
-            user={user} 
-            users={users} 
-            messages={messages} 
+          <MessagesView
+            user={user}
+            users={users}
+            messages={messages}
             onSendMessage={handleSend}
             initialSelectedUserId={selectedChatUserId}
             onBack={() => {
@@ -129,8 +131,8 @@ function App() {
             <p className="text-xs font-black uppercase tracking-widest text-gray-400">My Reminders</p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand font-black text-xs">{assignments.length}</div>
           </div>
-          <AssignmentList 
-            assignments={assignments} 
+          <AssignmentList
+            assignments={assignments}
             onEdit={(a) => setModal({ type: 'assignment', mode: 'edit', data: a })}
             onDelete={deleteAssign}
             onToggleComplete={handleToggleComplete}
@@ -140,8 +142,8 @@ function App() {
       if (activeTab === 'calendar') return <CalendarView assignments={assignments} announcements={announcements} />;
       if (activeTab === 'documents') return <DocumentsView user={user} documents={documents} onAdd={(d) => addDoc({ ...d, authorId: user.id })} onDelete={deleteDoc} courses={courses} />;
       if (activeTab === 'courses') return (
-        <CoursesView 
-          courses={courses.filter(c => c.faculty_id === user.id)} 
+        <CoursesView
+          courses={courses.filter(c => c.faculty_id === user.id)}
           users={users}
           onUpdate={updateCourse}
           onDelete={deleteCourse}
@@ -168,12 +170,12 @@ function App() {
                   </div>
                   <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase ${u.role === 'admin' ? 'bg-purple-50 text-purple-600' : u.role === 'faculty' ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-600'}`}>{u.role}</span>
                 </div>
-                
+
                 {u.role === 'faculty' && (
                   <div className="mt-4 pt-4 border-t border-gray-50 dark:border-gray-900">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black uppercase text-gray-400">Assigned Courses</p>
-                        <button 
+                        <button
                         onClick={() => {
                           const name = prompt('Course Name:');
                           const code = prompt('Course Code:');
@@ -224,15 +226,20 @@ function App() {
     <div className="relative min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 font-outfit">
       <AppBackground imageUrl={backgroundUrl} opacity={0.05} />
       <div className="relative z-10">
-        <AppHeader 
-          title={title} 
+        <AppHeader
+          title={title}
+          user={user}
           assignments={assignments}
           announcements={announcements}
           messages={messages}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           isFullWidth={tab === 'messages'}
+          onNavigateToChat={(id) => {
+            setSelectedChatUserId(id);
+            navigateTab('messages');
+          }}
         />
-        
+
         <Sidebar
           open={sidebarOpen}
           onToggle={() => setSidebarOpen(false)}
@@ -245,7 +252,7 @@ function App() {
             if (window.innerWidth < 1024) setSidebarOpen(false);
           }}
         />
-        
+
         <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-[64px]' : 'ml-0'}`}>
           <main className={`mx-auto h-[100dvh] w-full ${tab === 'messages' ? 'max-w-none px-0' : 'max-w-5xl px-4 md:px-6'} overflow-hidden`} style={{ paddingTop: chromePx.header }}>
             <div className="relative h-full overflow-hidden" onPointerDown={swipeHandlers.onPointerDown} onPointerMove={swipeHandlers.onPointerMove} onPointerUp={swipeHandlers.onPointerUp} onPointerCancel={swipeHandlers.onPointerCancel}>
@@ -254,7 +261,7 @@ function App() {
                   <div className={`absolute inset-0 will-change-transform transform-gpu transition-all duration-[800ms] ease-out ${transitionClass(false)}`}>
                     <div className={`h-full ${tab === 'messages' ? 'p-0' : 'py-2'}`}>{renderTabContent(tabTransition.from)}</div>
                   </div>
-                  <div className={`relative will-change-transform transform-gpu transition-all duration-[800ms] ease-out ${transitionClass(true)}`}>
+                  <div className={`absolute inset-0 will-change-transform transform-gpu transition-all duration-[800ms] ease-out ${transitionClass(true)}`}>
                     <div className={`h-full ${tab === 'messages' ? 'p-0' : 'py-2'}`}>{renderTabContent(tabTransition.to)}</div>
                   </div>
                 </>
@@ -268,7 +275,7 @@ function App() {
         </div>
 
         {(!isStudent && (tab === 'home' || tab === 'calendar' || tab === 'reminders' || tab === 'courses' || tab === 'documents')) && (
-          <button 
+          <button
             onClick={() => {
               if (tab === 'documents') {
                 setModal({ type: 'document', mode: 'create' });
@@ -285,9 +292,9 @@ function App() {
           </button>
         )}
 
-        <Modal 
-          isOpen={!!modal.type} 
-          onClose={() => setModal({ type: null })} 
+        <Modal
+          isOpen={!!modal.type}
+          onClose={() => setModal({ type: null })}
           title={
             modal.type === 'announcement' ? 'Broadcast Update' :
             modal.type === 'profile' ? 'Edit Profile' :
@@ -308,7 +315,7 @@ function App() {
                   </select>
                 )}
               </div>
-              
+
               {user.role === 'faculty' && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-gray-400">Target Audience</label>
@@ -320,7 +327,7 @@ function App() {
               )}
 
               <input id="ann-title" className="w-full rounded-2xl border border-gray-100 p-3 outline-none dark:border-gray-800 dark:bg-gray-900 font-bold" placeholder="Headline" />
-              
+
               <div className="flex flex-col items-center gap-2 p-4 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-3xl group transition-colors hover:border-brand/20">
                 <div className="h-24 w-full overflow-hidden rounded-2xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center relative">
                   <img id="ann-image-preview" className="absolute inset-0 h-full w-full object-cover hidden" />
@@ -329,11 +336,11 @@ function App() {
                     <span className="text-[10px] font-black uppercase">Cover Photo</span>
                   </div>
                 </div>
-                <input 
-                  type="file" 
-                  id="ann-image-file" 
-                  className="hidden" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  id="ann-image-file"
+                  className="hidden"
+                  accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (file) {
@@ -348,14 +355,14 @@ function App() {
                     }
                   }}
                 />
-                <button 
+                <button
                   onClick={() => document.getElementById('ann-image-file').click()}
                   className="text-[10px] font-black text-brand underline uppercase"
                 >Choose File</button>
               </div>
 
               <textarea id="ann-content" className="w-full rounded-2xl border border-gray-100 p-3 outline-none dark:border-gray-800 dark:bg-gray-900 h-32 text-sm" placeholder="Message content..." />
-              
+
               <button onClick={async () => {
                 const title = document.getElementById('ann-title').value;
                 const content = document.getElementById('ann-content').value;
@@ -432,7 +439,7 @@ function App() {
           )}
 
           {modal.type === 'assignment' && (
-            <AssignmentWizard 
+            <AssignmentWizard
               initialValues={modal.data} mode={modal.mode} onCancel={() => setModal({ type: null })}
               onSubmit={async (d) => {
                 try {
@@ -540,20 +547,20 @@ function App() {
                 const name = document.getElementById('doc-name').value;
                 const folderName = document.getElementById('doc-folder').value;
                 const file = document.getElementById('doc-file').files[0];
-                
+
                 if (name && folderName && file) {
                   try {
                     const uploadResult = await db.uploadDocumentFile(file, name);
                     const sizeInMB = (uploadResult.size / (1024 * 1024)).toFixed(2);
-                    
-                    await addDoc({ 
-                      name: uploadResult.filename, 
-                      folderName, 
-                      size: `${sizeInMB} MB`, 
-                      type: uploadResult.mimetype, 
-                      authorId: user.id 
+
+                    await addDoc({
+                      name: uploadResult.filename,
+                      folderName,
+                      size: `${sizeInMB} MB`,
+                      type: uploadResult.mimetype,
+                      authorId: user.id
                     });
-                    
+
                     setModal({ type: null });
                     addToast({ title: 'Success', message: 'Document uploaded successfully', type: 'success', push: false });
                   } catch (e) {

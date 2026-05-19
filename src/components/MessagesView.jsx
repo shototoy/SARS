@@ -13,7 +13,7 @@ export default function MessagesView({ user, users, messages, onSendMessage, ini
   const chatMessages = useMemo(() => {
     if (!selectedUser) return [];
     return messages
-      .filter(m => 
+      .filter(m =>
         (m.sender_id == user.id && m.receiver_id == selectedUser.id) ||
         (m.sender_id == selectedUser.id && m.receiver_id == user.id)
       )
@@ -36,7 +36,7 @@ export default function MessagesView({ user, users, messages, onSendMessage, ini
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-gray-950">
-      {/* Header */}
+      { }
       <div className="flex items-center justify-between border-b border-gray-50 p-4 dark:border-gray-900 shrink-0">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2 -ml-2 text-gray-400 hover:text-brand transition-colors">
@@ -58,8 +58,8 @@ export default function MessagesView({ user, users, messages, onSendMessage, ini
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div 
+      { }
+      <div
         ref={scrollRef}
         className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 scrollbar-hide"
       >
@@ -67,7 +67,7 @@ export default function MessagesView({ user, users, messages, onSendMessage, ini
           const isMe = m.sender_id === user.id;
           const prevMsg = chatMessages[i - 1];
           const showAvatar = !isMe && (!prevMsg || prevMsg.sender_id !== m.sender_id);
-          
+
           return (
             <div key={m.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
               {!isMe && (
@@ -81,12 +81,11 @@ export default function MessagesView({ user, users, messages, onSendMessage, ini
                 </div>
               )}
               <div className="max-w-[75%] space-y-1">
-                <div 
-                  className={`rounded-[20px] px-4 py-2 text-sm font-bold shadow-sm ${
-                    isMe 
-                      ? 'rounded-br-none bg-brand text-white' 
-                      : 'rounded-bl-none bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                  }`}
+                <div
+                  className={`rounded-[20px] px-4 py-2 text-sm font-bold shadow-sm ${isMe
+                    ? 'rounded-br-none bg-brand text-white'
+                    : 'rounded-bl-none bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                    }`}
                   style={isMe ? { backgroundColor: colors.main } : {}}
                 >
                   {m.content}
@@ -100,19 +99,19 @@ export default function MessagesView({ user, users, messages, onSendMessage, ini
         })}
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 pb-8 bg-white dark:bg-gray-950 shrink-0">
+      { }
+      <div className="p-4 pb-12 bg-white dark:bg-gray-950 shrink-0">
         <div className="flex items-center gap-2 rounded-3xl bg-gray-50 p-1.5 pl-4 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
           <button className="text-gray-400 hover:text-brand transition-colors"><Paperclip size={18} /></button>
-          <input 
+          <input
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Type a message..." 
+            placeholder="Type a message..."
             className="flex-1 bg-transparent py-2 text-sm font-bold outline-none"
           />
           <button className="p-2 text-gray-400 hover:text-brand transition-colors"><Smile size={18} /></button>
-          <button 
+          <button
             onClick={handleSend}
             disabled={!text.trim()}
             className={`flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-lg transition-all active:scale-90 disabled:opacity-50`}
@@ -128,12 +127,12 @@ export default function MessagesView({ user, users, messages, onSendMessage, ini
 
 function X({ size }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 6-12 12" /><path d="m6 6 12 12" /></svg>
   );
 }
 
 function MessageSquare({ size }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
   );
 }

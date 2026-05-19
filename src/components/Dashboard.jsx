@@ -10,15 +10,17 @@ export default function Dashboard({ user, users = [], announcements = [], messag
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [viewingCourse, setViewingCourse] = useState(null);
 
-  // Calculate latest messages per conversation
   const latestMessages = React.useMemo(() => {
     const map = {};
     messages.forEach(m => {
-      const otherId = m.sender_id == user.id ? m.receiver_id : m.sender_id;
+      const isSender = Number(m.sender_id) === Number(user?.id);
+      const isReceiver = Number(m.receiver_id) === Number(user?.id);
+      if (!isSender && !isReceiver) return;
+      const otherId = isSender ? Number(m.receiver_id) : Number(m.sender_id);
       if (!map[otherId] || new Date(m.timestamp) > new Date(map[otherId].timestamp)) {
         map[otherId] = {
           ...m,
-          otherUser: users.find(u => u.id == otherId)
+          otherUser: users.find(u => Number(u.id) === otherId)
         };
       }
     });
@@ -31,19 +33,19 @@ export default function Dashboard({ user, users = [], announcements = [], messag
 
   return (
     <div className="flex h-full flex-col gap-6 py-1 overflow-auto scrollbar-hide relative pb-32">
-      {/* Updates Section (Admin/General) */}
+      {}
       <section className="shrink-0 space-y-2">
         <div className="flex items-center justify-between px-1">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Updates</p>
           <button className="text-[10px] font-bold text-gray-400 hover:text-gray-600">View All</button>
         </div>
-        
+
         <div className={`flex gap-3 overflow-x-auto pb-1 scrollbar-hide ${!isStudent ? 'snap-x snap-mandatory -mx-1' : ''}`}>
           {announcements.filter(a => !a.target_course_id).map(ann => {
             const imageUrl = getAnnImg(ann);
             return (
-              <div 
-                key={ann.id} 
+              <div
+                key={ann.id}
                 className={`overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950 transition-all ${
                   isStudent ? 'min-w-[240px] max-w-[240px]' : 'min-w-full snap-center'
                 }`}
@@ -51,10 +53,10 @@ export default function Dashboard({ user, users = [], announcements = [], messag
                 {!isStudent && (
                   <>
                     <div className="relative h-36 w-full overflow-hidden bg-gray-50 announcement-image-container">
-                      <img 
-                        src={imageUrl} 
-                        alt="" 
-                        className="h-full w-full object-cover" 
+                      <img
+                        src={imageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
                         onError={(e) => { e.target.parentElement.style.display = 'none'; }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
@@ -63,9 +65,9 @@ export default function Dashboard({ user, users = [], announcements = [], messag
                       </div>
                     </div>
                     <div className="px-4 py-1.5 flex items-center justify-end">
-                      <button 
+                      <button
                         onClick={() => setSelectedAnnouncement(ann)}
-                        className="text-[9px] font-black uppercase tracking-widest hover:opacity-70 transition-opacity" 
+                        className="text-[9px] font-black uppercase tracking-widest hover:opacity-70 transition-opacity"
                         style={{ color: colors.main }}
                       >
                         Read More
@@ -78,9 +80,9 @@ export default function Dashboard({ user, users = [], announcements = [], messag
                   <div className="p-5">
                     <p className="text-xs font-black text-gray-900 dark:text-gray-100 line-clamp-1">{ann.title}</p>
                     <p className="mt-1 text-[11px] font-bold text-gray-500 line-clamp-1">{ann.content}</p>
-                    <button 
+                    <button
                       onClick={() => setSelectedAnnouncement(ann)}
-                      className="mt-3 text-[10px] font-black uppercase tracking-widest hover:opacity-70 transition-opacity" 
+                      className="mt-3 text-[10px] font-black uppercase tracking-widest hover:opacity-70 transition-opacity"
                       style={{ color: colors.main }}
                     >
                       Read More
@@ -94,16 +96,16 @@ export default function Dashboard({ user, users = [], announcements = [], messag
         </div>
       </section>
 
-      {/* Courses Section (Small Icon-like Cards) */}
+      {}
       <section className="shrink-0 space-y-2">
         <div className="flex items-center px-1">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">My Courses</p>
         </div>
-        
+
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
           {courses.map(course => (
-            <button 
-              key={course.id} 
+            <button
+              key={course.id}
               onClick={() => setViewingCourse(course)}
               className="group flex aspect-square h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm transition-all hover:scale-110 active:scale-95 dark:bg-gray-900"
             >
@@ -114,7 +116,7 @@ export default function Dashboard({ user, users = [], announcements = [], messag
         </div>
       </section>
 
-      {/* Messages Section */}
+      {}
       <section className="flex flex-1 min-h-[400px] flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Direct Messages</p>
@@ -127,11 +129,11 @@ export default function Dashboard({ user, users = [], announcements = [], messag
           <div className="divide-y divide-gray-50 dark:divide-gray-900">
             {latestMessages.map(m => {
               const otherUser = m.otherUser;
-              const isMe = m.sender_id === user.id;
+              const isMe = Number(m.sender_id) === Number(user?.id);
 
               return (
-                <button 
-                  key={m.id} 
+                <button
+                  key={m.id}
                   onClick={() => onNavigateToChat(otherUser?.id)}
                   className="flex w-full items-center gap-4 p-4 transition hover:bg-gray-50 dark:hover:bg-gray-900 text-left first:rounded-t-[28px] last:rounded-b-[28px]"
                 >
@@ -163,7 +165,7 @@ export default function Dashboard({ user, users = [], announcements = [], messag
         </div>
       </section>
 
-      {/* COURSE ANNOUNCEMENTS MODAL */}
+      {}
       {viewingCourse && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setViewingCourse(null)} />
@@ -181,9 +183,9 @@ export default function Dashboard({ user, users = [], announcements = [], messag
                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{dayjs(ann.date).format('MMM D, YYYY')}</p>
                   <p className="text-base font-black mb-2">{ann.title}</p>
                   <p className="text-sm font-bold text-gray-500 leading-relaxed mb-4">{ann.content}</p>
-                  <button 
+                  <button
                     onClick={() => { setSelectedAnnouncement(ann); setViewingCourse(null); }}
-                    className="text-[10px] font-black uppercase tracking-widest" 
+                    className="text-[10px] font-black uppercase tracking-widest"
                     style={{ color: colors.main }}
                   >Read Full Post</button>
                 </div>
@@ -199,28 +201,28 @@ export default function Dashboard({ user, users = [], announcements = [], messag
         </div>
       )}
 
-      {/* READ MORE MODAL (GENERAL) */}
+      {}
       {selectedAnnouncement && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedAnnouncement(null)} />
           <div className="relative w-full max-w-lg overflow-hidden rounded-[32px] bg-white shadow-2xl dark:bg-gray-950">
             <div className="relative w-full bg-gray-100 ann-modal-hero" style={{ height: 224 }}>
-              <img 
-                src={getAnnImg(selectedAnnouncement)} 
-                alt="" 
+              <img
+                src={getAnnImg(selectedAnnouncement)}
+                alt=""
                 className="h-full w-full object-cover"
-                onError={(e) => { 
+                onError={(e) => {
                   const hero = e.target.closest('.ann-modal-hero');
-                  if (hero) { 
-                    hero.style.height = '0'; 
-                    hero.style.overflow = 'hidden'; 
+                  if (hero) {
+                    hero.style.height = '0';
+                    hero.style.overflow = 'hidden';
                     const fallback = hero.parentElement.querySelector('.ann-modal-fallback-title');
                     if (fallback) fallback.style.display = 'block';
                   }
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <button 
+              <button
                 onClick={() => setSelectedAnnouncement(null)}
                 className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/40 transition-colors"
               >
@@ -258,7 +260,7 @@ export default function Dashboard({ user, users = [], announcements = [], messag
                 <p className="text-sm font-bold leading-relaxed text-gray-600 dark:text-gray-400">{selectedAnnouncement.content}</p>
               </div>
               <div className="mt-8 flex justify-end">
-                <button 
+                <button
                   onClick={() => setSelectedAnnouncement(null)}
                   className="rounded-2xl px-8 py-3 text-xs font-black uppercase tracking-widest text-white transition-transform hover:scale-105 active:scale-95"
                   style={{ backgroundColor: colors.main }}

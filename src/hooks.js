@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import * as db from './lib/db';
@@ -50,11 +50,54 @@ export function useDocuments(user) {
 export function useMessages(user) {
   const [messages, setMessages] = useState([]);
   const refresh = async () => { if (user) setMessages(await db.getMessages(user.id)); };
-  useEffect(() => { refresh(); }, [user]);
+  useEffect(() => {
+    refresh();
+    if (!user) return;
+    const wsUrl = `ws://${window.location.hostname}:5001`;
+    let socket = new WebSocket(wsUrl);
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ type: 'register', userId: user.id }));
+    };
+    socket.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'message') {
+          refresh();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    socket.onclose = () => {
+      let intervalId = setInterval(() => {
+        if (socket.readyState === WebSocket.CLOSED) {
+          socket = new WebSocket(wsUrl);
+          socket.onopen = () => {
+            clearInterval(intervalId);
+            socket.send(JSON.stringify({ type: 'register', userId: user.id }));
+          };
+          socket.onmessage = (event) => {
+            try {
+              const payload = JSON.parse(event.data);
+              if (payload.type === 'message') {
+                refresh();
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          };
+        }
+      }, 5000);
+      return () => clearInterval(intervalId);
+    };
+    return () => {
+      socket.close();
+    };
+  }, [user]);
   return {
     messages,
     refresh,
-    handleSend: async m => { await db.sendMessage({ ...m, senderId: user.id }); await refresh(); }
+    handleSend: async m => { await db.sendMessage({ ...m, senderId: user.id }); }
   };
 }
 
@@ -120,7 +163,7 @@ export function useNavigation(user) {
 }
 
 export function useChromeMeasurement(user) {
-  const [chromePx, setChromePx] = useState({ header: 80, footer: 0 });
+  const [chromePx, setChromePx] = useState({ header: 56, footer: 0 });
   useEffect(() => {
     if (!user) return;
     const measure = () => {
@@ -134,15 +177,30 @@ export function useChromeMeasurement(user) {
   return chromePx;
 }
 
-export function useNotifications(assignments = [], announcements = [], messages = []) {
+export function useNotifications(assignments = [], announcements = [], messages = [], user = null) {
   const [now, setNow] = useState(() => dayjs());
-  const prevItemsRef = useRef([]);
-
+  const [readIds, setReadIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('sars.read_notif_ids') || '[]');
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        setReadIds(JSON.parse(localStorage.getItem('sars.read_notif_ids') || '[]'));
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    window.addEventListener('storage_read_notifs', handleStorageChange);
+    return () => window.removeEventListener('storage_read_notifs', handleStorageChange);
+  }, []);
   useEffect(() => {
     const id = setInterval(() => setNow(dayjs()), 30000);
     return () => clearInterval(id);
   }, []);
-
   const items = useMemo(() => {
     const list = [];
     assignments.filter(a => a.deadline && a.status !== 'Completed').forEach(a => {
@@ -154,36 +212,51 @@ export function useNotifications(assignments = [], announcements = [], messages 
         list.push({ id: `a-${a.id}`, title: a.title, sub: a.subject, when: d, kind: 'dueSoon' });
       }
     });
-
     announcements.forEach(a => {
       list.push({ id: `ann-${a.id}`, title: a.title, sub: a.type === 'Event' ? 'Event' : 'Announcement', when: dayjs(a.date), kind: 'info' });
     });
-
-    const unreadMessages = messages.filter(m => !m.is_read);
+    const unreadMessages = messages.filter(m => !m.is_read && user && Number(m.receiver_id) === Number(user?.id));
     unreadMessages.forEach(m => {
-      list.push({ id: `msg-${m.id}`, title: 'New Message', sub: m.content, when: dayjs(m.timestamp), kind: 'message' });
+      list.push({ id: `msg-${m.id}`, title: 'New Message', sub: m.content, when: dayjs(m.timestamp), kind: 'message', senderId: m.sender_id });
     });
-
-    return list.sort((a, b) => b.when.valueOf() - a.when.valueOf()).slice(0, 10);
-  }, [assignments, announcements, messages, now]);
-
+    return list.map(item => ({
+      ...item,
+      isRead: readIds.includes(item.id)
+    })).sort((a, b) => b.when.valueOf() - a.when.valueOf()).slice(0, 10);
+  }, [assignments, announcements, messages, now, readIds, user]);
   const [newItems, setNewItems] = useState([]);
-  const hasLoadedRef = useRef(false);
-
   useEffect(() => {
-    let added = items.filter(i => !prevItemsRef.current.find(p => p.id === i.id));
-    if (!hasLoadedRef.current) {
-      added = added.filter(i => i.kind === 'message');
-      hasLoadedRef.current = true;
+    try {
+      const toasted = JSON.parse(localStorage.getItem('sars.toasted_notif_ids') || '[]');
+      const toToast = items.filter(i => !i.isRead && !toasted.includes(i.id));
+      if (toToast.length > 0) {
+        setNewItems(toToast);
+        const nextToasted = [...new Set([...toasted, ...toToast.map(i => i.id)])];
+        localStorage.setItem('sars.toasted_notif_ids', JSON.stringify(nextToasted));
+      } else {
+        setNewItems([]);
+      }
+    } catch (e) {
+      console.error(e);
     }
-    setNewItems(added);
-    prevItemsRef.current = items;
   }, [items]);
-
-  return { 
-    items, 
-    hasUrgent: items.some(i => i.kind === 'overdue' || i.kind === 'dueSoon'),
-    newItems
+  const markAsRead = useCallback((id) => {
+    try {
+      const reads = JSON.parse(localStorage.getItem('sars.read_notif_ids') || '[]');
+      if (!reads.includes(id)) {
+        reads.push(id);
+        localStorage.setItem('sars.read_notif_ids', JSON.stringify(reads));
+        window.dispatchEvent(new Event('storage_read_notifs'));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+  return {
+    items,
+    hasUrgent: items.some(i => !i.isRead && (i.kind === 'overdue' || i.kind === 'dueSoon')),
+    newItems,
+    markAsRead
   };
 }
 

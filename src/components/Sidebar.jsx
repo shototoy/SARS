@@ -19,22 +19,20 @@ export default function Sidebar({ open, onToggle, activeTab, onSelectTab, onLogo
     ITEMS.push({ key: 'reminders', label: 'Reminders', icon: CheckCircle2 });
     ITEMS.push({ key: 'calendar', label: 'Schedule', icon: CalendarDays });
   }
-  
-  ITEMS.push({ key: 'documents', label: 'Documents', icon: FolderDown });
 
   if (role === 'admin') {
     ITEMS.push({ key: 'users', label: 'Users', icon: Users });
   }
 
   return (
-    <aside 
+    <aside
       className={`fixed left-0 top-0 z-40 flex h-[100dvh] w-[64px] flex-col bg-white dark:bg-gray-950 border-r border-gray-100 dark:border-gray-800 shadow-2xl transition-transform duration-300 ${
         open ? 'translate-x-0' : '-translate-x-full'
       }`}
     >
       <div className="flex h-16 items-center justify-center border-b border-gray-100 dark:border-gray-800">
-        <button 
-          onClick={onToggle} 
+        <button
+          onClick={onToggle}
           className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition active:scale-95 text-gray-500"
         >
           <Menu size={22} />
@@ -43,9 +41,9 @@ export default function Sidebar({ open, onToggle, activeTab, onSelectTab, onLogo
 
       <div className="flex-1 flex flex-col items-center p-2 pt-6 gap-4 overflow-hidden">
         {ITEMS.map((item) => (
-          <button 
-            key={item.key} 
-            onClick={() => onSelectTab(item.key)} 
+          <button
+            key={item.key}
+            onClick={() => onSelectTab(item.key)}
             className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 ${
               activeTab === item.key ? 'text-white shadow-md' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900'
             }`}
@@ -58,7 +56,7 @@ export default function Sidebar({ open, onToggle, activeTab, onSelectTab, onLogo
       </div>
 
       <div className="mt-auto pb-6 flex flex-col items-center gap-4">
-        <button 
+        <button
           onClick={onEditProfile}
           className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95"
           style={{ backgroundColor: `${colors.main}15` }}
@@ -70,8 +68,8 @@ export default function Sidebar({ open, onToggle, activeTab, onSelectTab, onLogo
           <UserCircle2 size={24} style={{ color: colors.main, display: user?.username ? 'none' : 'block' }} />
         </button>
 
-        <button 
-          onClick={onLogout} 
+        <button
+          onClick={onLogout}
           className="flex h-12 w-12 items-center justify-center rounded-2xl text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200"
           title="Logout"
         >

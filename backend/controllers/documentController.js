@@ -1,7 +1,7 @@
 const db = require('../config/db');
 
 exports.getDocuments = async (req, res) => {
-  const { role, id, username } = req.query; // Pass user info in query for simplicity
+  const { role, id, username } = req.query;
   try {
     let query = 'SELECT * FROM documents';
     let params = [];
@@ -48,7 +48,7 @@ exports.addDocument = async (req, res) => {
 
 exports.deleteDocument = async (req, res) => {
   const { id } = req.params;
-  const { authorId } = req.query; // Verification info
+  const { authorId } = req.query;
   try {
     const [result] = await db.execute('DELETE FROM documents WHERE id = ? AND author_id = ?', [id, authorId]);
     if (result.affectedRows === 0) {

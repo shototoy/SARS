@@ -38,9 +38,9 @@ export default function Login({ onAuthed, className = '' }) {
             <input {...register('password', { required: true })} className={`${inputCls} pr-12`} placeholder="Password" type={showPwd ? 'text' : 'password'} />
             <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-gray-100 dark:bg-gray-900">{showPwd ? <EyeOff size={18} /> : <Eye size={18} />}</button>
           </div>
-          <button 
-            type="submit" 
-            disabled={isSubmitting} 
+          <button
+            type="submit"
+            disabled={isSubmitting}
             className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-extrabold text-white transition opacity-90 hover:opacity-100 disabled:opacity-50 shadow-lg shadow-brand/20"
             style={{ backgroundColor: colors.main }}
           >

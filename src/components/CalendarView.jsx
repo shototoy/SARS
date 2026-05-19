@@ -14,14 +14,14 @@ export default function CalendarView({ assignments = [], announcements = [] }) {
 
   const events = useMemo(() => {
     const map = new Map();
-    // Assignments
+
     assignments.forEach(a => {
       if (!a.deadline) return;
       const k = toKey(a.deadline);
       if (!map.has(k)) map.set(k, []);
       map.get(k).push({ ...a, type: 'assignment' });
     });
-    // Events from announcements
+
     announcements.filter(a => a.type === 'Event').forEach(a => {
       const k = toKey(a.date);
       if (!map.has(k)) map.set(k, []);
@@ -65,11 +65,11 @@ export default function CalendarView({ assignments = [], announcements = [] }) {
             const k = toKey(d), dayEvents = events.get(k), active = k === selKey;
             const hasAssignment = dayEvents?.some(e => e.type === 'assignment');
             const hasEvent = dayEvents?.some(e => e.type === 'event');
-            
+
             return (
-              <button 
-                key={k} 
-                onClick={() => openDay(d)} 
+              <button
+                key={k}
+                onClick={() => openDay(d)}
                 className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl transition-all duration-200 ${active ? 'ring-2' : ''} ${d.isSame(cursor, 'month') ? 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 shadow-sm' : 'opacity-30'}`}
                 style={{ ringColor: active ? colors.main : undefined }}
               >

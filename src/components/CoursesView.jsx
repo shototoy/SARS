@@ -19,8 +19,8 @@ export default function CoursesView({ courses, users, onAdd, onUpdate, onDelete,
     }
   }, [editingCourse]);
 
-  const filteredStudents = students.filter(s => 
-    s.username.toLowerCase().includes(search.toLowerCase()) && 
+  const filteredStudents = students.filter(s =>
+    s.username.toLowerCase().includes(search.toLowerCase()) &&
     !courseDetails?.students?.find(cs => cs.id === s.id)
   );
 
@@ -45,13 +45,13 @@ export default function CoursesView({ courses, users, onAdd, onUpdate, onDelete,
                 </div>
               </div>
               <div className="flex gap-2">
-                <button 
+                <button
                   onClick={() => setEditingCourse(course)}
                   className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-400 transition hover:bg-brand/10 hover:text-brand dark:bg-gray-900"
                 >
                   <Edit2 size={18} />
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     if (window.confirm(`Delete ${course.name}?`)) onDelete(course.id);
                   }}
@@ -86,18 +86,18 @@ export default function CoursesView({ courses, users, onAdd, onUpdate, onDelete,
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase text-gray-400">Course Name</label>
-                      <input 
-                        defaultValue={editingCourse.name} 
+                      <input
+                        defaultValue={editingCourse.name}
                         id="edit-course-name"
-                        className="w-full rounded-2xl border border-gray-100 p-3 text-sm font-bold outline-none dark:border-gray-800 dark:bg-gray-900" 
+                        className="w-full rounded-2xl border border-gray-100 p-3 text-sm font-bold outline-none dark:border-gray-800 dark:bg-gray-900"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase text-gray-400">Course Code</label>
-                      <input 
-                        defaultValue={editingCourse.code} 
+                      <input
+                        defaultValue={editingCourse.code}
                         id="edit-course-code"
-                        className="w-full rounded-2xl border border-gray-100 p-3 text-sm font-bold outline-none dark:border-gray-800 dark:bg-gray-900" 
+                        className="w-full rounded-2xl border border-gray-100 p-3 text-sm font-bold outline-none dark:border-gray-800 dark:bg-gray-900"
                       />
                     </div>
                   </div>
@@ -106,11 +106,11 @@ export default function CoursesView({ courses, users, onAdd, onUpdate, onDelete,
                 <div className="p-6 md:p-8 space-y-4 flex flex-col min-h-0">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Enrolled Students ({courseDetails?.students?.length || 0})</p>
-                    
+
                     <div className="mb-3 relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                      <input 
-                        placeholder="Search students..." 
+                      <input
+                        placeholder="Search students..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         className="w-full rounded-xl border border-gray-100 py-2 pl-9 pr-4 text-xs font-bold outline-none dark:border-gray-800 dark:bg-gray-900"
@@ -122,7 +122,7 @@ export default function CoursesView({ courses, users, onAdd, onUpdate, onDelete,
                     {courseDetails?.students?.map(s => (
                       <div key={s.id} className="flex items-center justify-between rounded-xl bg-gray-50 p-2 dark:bg-gray-900">
                         <span className="text-xs font-black">{s.username}</span>
-                        <button 
+                        <button
                           onClick={async () => {
                             await onUnenroll(editingCourse.id, s.id);
                             const updated = await db.getCourseDetails(editingCourse.id);
@@ -132,14 +132,14 @@ export default function CoursesView({ courses, users, onAdd, onUpdate, onDelete,
                         ><X size={14} /></button>
                       </div>
                     ))}
-                    
+
                     {filteredStudents.length > 0 && (
                       <div className="pt-2 border-t border-gray-50 dark:border-gray-900 mt-2">
                         <p className="text-[9px] font-black uppercase text-gray-300 mb-2">Available to Enroll</p>
                         {filteredStudents.map(s => (
                           <div key={s.id} className="flex items-center justify-between rounded-xl p-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                             <span className="text-xs font-bold opacity-60">{s.username}</span>
-                            <button 
+                            <button
                               onClick={async () => {
                                 await onEnroll(editingCourse.id, s.id);
                                 const updated = await db.getCourseDetails(editingCourse.id);
@@ -157,7 +157,7 @@ export default function CoursesView({ courses, users, onAdd, onUpdate, onDelete,
             </div>
 
             <div className="p-6 border-t border-gray-50 dark:border-gray-900 shrink-0">
-              <button 
+              <button
                 onClick={() => {
                   const name = document.getElementById('edit-course-name').value;
                   const code = document.getElementById('edit-course-code').value;

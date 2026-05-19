@@ -10,13 +10,12 @@ export function useToasts() {
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback(({ title, message, type = 'info', duration = 5000, push = false }) => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, title, message, type, duration }]);
-    
+  const addToast = useCallback(({ id, title, message, type = 'info', duration = 5000, push = false }) => {
+    const toastId = id || Date.now();
+    setToasts(prev => [...prev, { id: toastId, title, message, type, duration }]);
     if (duration > 0) {
       setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
+        setToasts(prev => prev.filter(t => t.id !== toastId));
       }, duration);
     }
     if (push && Notification.permission === 'granted') {
@@ -26,6 +25,16 @@ export function ToastProvider({ children }) {
 
   const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+    try {
+      const reads = JSON.parse(localStorage.getItem('sars.read_notif_ids') || '[]');
+      if (!reads.includes(id)) {
+        reads.push(id);
+        localStorage.setItem('sars.read_notif_ids', JSON.stringify(reads));
+        window.dispatchEvent(new Event('storage_read_notifs'));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
   const requestPushPermission = useCallback(async () => {
@@ -40,8 +49,8 @@ export function ToastProvider({ children }) {
       {children}
       <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
         {toasts.map(toast => (
-          <div 
-            key={toast.id} 
+          <div
+            key={toast.id}
             className="pointer-events-auto flex w-80 translate-x-0 animate-in slide-in-from-right overflow-hidden rounded-3xl border border-gray-100 bg-white/80 p-4 shadow-2xl backdrop-blur-xl dark:border-gray-800 dark:bg-gray-950/80"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-900 mr-4">
@@ -54,9 +63,10 @@ export function ToastProvider({ children }) {
               <p className="text-sm font-black text-gray-900 dark:text-gray-100 truncate">{toast.title}</p>
               <p className="text-xs font-bold text-gray-400 line-clamp-2">{toast.message}</p>
             </div>
-            <button 
+            <button
+              type="button"
               onClick={() => removeToast(toast.id)}
-              className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="ml-2 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors cursor-pointer pointer-events-auto"
             >
               <X size={16} />
             </button>
