@@ -152,13 +152,35 @@ async function start() {
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`[SERVER] Running locally on http://127.0.0.1:${PORT}`);
 
+      let localIp = '127.0.0.1';
       const interfaces = os.networkInterfaces();
       for (const name of Object.keys(interfaces)) {
         for (const iface of interfaces[name]) {
           if (iface.family === 'IPv4' && !iface.internal) {
+            localIp = iface.address;
             console.log(`[SERVER] Network IP: http://${iface.address}:${PORT}`);
           }
         }
+      }
+
+      try {
+        const mdns = require('multicast-dns')();
+        mdns.on('query', (query) => {
+          const isTarget = query.questions.some(q => q.name === 'campusconnect.local');
+          if (isTarget) {
+            mdns.respond({
+              answers: [{
+                name: 'campusconnect.local',
+                type: 'A',
+                ttl: 120,
+                data: localIp
+              }]
+            });
+          }
+        });
+        console.log(`[MDNS] Advertising campusconnect.local dynamically pointing to network IP ${localIp}`);
+      } catch (mdnsErr) {
+        console.error(`[MDNS] Failed to start mDNS advertiser:`, mdnsErr.message);
       }
     });
   } catch (err) {

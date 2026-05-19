@@ -53,7 +53,8 @@ export function useMessages(user) {
   useEffect(() => {
     refresh();
     if (!user) return;
-    const wsUrl = `ws://${window.location.hostname}:5001`;
+    const apiBase = import.meta.env.VITE_API_BASE || '';
+    const wsUrl = apiBase ? apiBase.replace(/^http/, 'ws') : `ws://${window.location.hostname}:5001`;
     let socket = new WebSocket(wsUrl);
     socket.onopen = () => {
       socket.send(JSON.stringify({ type: 'register', userId: user.id }));

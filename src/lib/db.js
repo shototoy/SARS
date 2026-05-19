@@ -1,6 +1,7 @@
 import { apiFetch } from './api';
 
-const UPLOAD_BASE = 'http://127.0.0.1:5001/uploads';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+const UPLOAD_BASE = `${API_BASE}/uploads`;
 
 export function profileImgUrl(username) {
   if (!username) return '';
@@ -15,7 +16,8 @@ export function announcementImgUrl(title) {
 export async function uploadAnnouncementPhoto(file, title) {
   const formData = new FormData();
   formData.append('announcement', file);
-  const res = await fetch(`/api/upload/announcement?title=${encodeURIComponent(title)}`, {
+  const targetUrl = `${API_BASE}/api/upload/announcement?title=${encodeURIComponent(title)}`;
+  const res = await fetch(targetUrl, {
     method: 'POST',
     body: formData,
   });
@@ -25,7 +27,7 @@ export async function uploadAnnouncementPhoto(file, title) {
 export async function uploadDocumentFile(file, name) {
   const formData = new FormData();
   formData.append('document', file);
-  const url = name ? `/api/upload/document?name=${encodeURIComponent(name)}` : '/api/upload/document';
+  const url = name ? `${API_BASE}/api/upload/document?name=${encodeURIComponent(name)}` : `${API_BASE}/api/upload/document`;
   const res = await fetch(url, {
     method: 'POST',
     body: formData,
