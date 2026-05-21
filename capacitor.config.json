@@ -1,6 +1,6 @@
 {
-  "appId": "com.sars.app",
-  "appName": "SARS",
+  "appId": "com.campusconnect.app",
+  "appName": "CampusConnect",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "plugins": {

@@ -10,8 +10,8 @@ const ALARM_BURST_STEP_SECONDS = 5;
 const UPCOMING_SLOT_ID_STRIDE = 10;
 const UPCOMING_SLOT_ID_CAPACITY = 100;
 
-const REMINDER_CHANNEL_ID = 'sars-reminders-v3';
-const ALARM_CHANNEL_ID = 'sars-alarms-v1';
+const REMINDER_CHANNEL_ID = 'campusconnect-reminders-v3';
+const ALARM_CHANNEL_ID = 'campusconnect-alarms-v1';
 const TEST_NOTIFICATION_BASE_ID = 9_999_900;
 
 function loadPlugin() {
@@ -34,7 +34,7 @@ async function ensureNotificationChannels(plugin) {
       plugin.createChannel({
         id: REMINDER_CHANNEL_ID,
         name: 'Reminders',
-        description: 'SARS assignment reminders',
+        description: 'CampusConnect assignment reminders',
         importance: 5,
         sound: 'beep',
         vibration: true,
@@ -182,7 +182,7 @@ export async function testLocalNotifications({ secondsFromNow = 5 } = {}) {
         notifications: buildBurstNotifications({
           baseId: TEST_NOTIFICATION_BASE_ID,
           at,
-          title: 'SARS test notification',
+          title: 'CampusConnect test notification',
           body: 'Urgent test alarm. Tap to open and clear.',
           extra: { kind: 'test' },
           burstCount: ALARM_BURST_COUNT,

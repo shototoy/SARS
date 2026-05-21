@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import * as db from './lib/db';
 import * as auth from './lib/auth';
+import { getApiBase } from './lib/api';
 
 dayjs.extend(relativeTime);
 
@@ -53,8 +54,8 @@ export function useMessages(user) {
   useEffect(() => {
     refresh();
     if (!user) return;
-    const apiBase = import.meta.env.VITE_API_BASE || '';
-    const wsUrl = apiBase ? apiBase.replace(/^http/, 'ws') : `ws://${window.location.hostname}:5001`;
+    const apiBase = getApiBase();
+    const wsUrl = apiBase.replace(/^http/, 'ws');
     let socket = new WebSocket(wsUrl);
     socket.onopen = () => {
       socket.send(JSON.stringify({ type: 'register', userId: user.id }));
@@ -182,7 +183,7 @@ export function useNotifications(assignments = [], announcements = [], messages 
   const [now, setNow] = useState(() => dayjs());
   const [readIds, setReadIds] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('sars.read_notif_ids') || '[]');
+      return JSON.parse(localStorage.getItem('campusconnect.read_notif_ids') || '[]');
     } catch {
       return [];
     }
@@ -190,7 +191,7 @@ export function useNotifications(assignments = [], announcements = [], messages 
   useEffect(() => {
     const handleStorageChange = () => {
       try {
-        setReadIds(JSON.parse(localStorage.getItem('sars.read_notif_ids') || '[]'));
+        setReadIds(JSON.parse(localStorage.getItem('campusconnect.read_notif_ids') || '[]'));
       } catch (e) {
         console.error(e);
       }
@@ -228,12 +229,12 @@ export function useNotifications(assignments = [], announcements = [], messages 
   const [newItems, setNewItems] = useState([]);
   useEffect(() => {
     try {
-      const toasted = JSON.parse(localStorage.getItem('sars.toasted_notif_ids') || '[]');
+      const toasted = JSON.parse(localStorage.getItem('campusconnect.toasted_notif_ids') || '[]');
       const toToast = items.filter(i => !i.isRead && !toasted.includes(i.id));
       if (toToast.length > 0) {
         setNewItems(toToast);
         const nextToasted = [...new Set([...toasted, ...toToast.map(i => i.id)])];
-        localStorage.setItem('sars.toasted_notif_ids', JSON.stringify(nextToasted));
+        localStorage.setItem('campusconnect.toasted_notif_ids', JSON.stringify(nextToasted));
       } else {
         setNewItems([]);
       }
@@ -243,10 +244,10 @@ export function useNotifications(assignments = [], announcements = [], messages 
   }, [items]);
   const markAsRead = useCallback((id) => {
     try {
-      const reads = JSON.parse(localStorage.getItem('sars.read_notif_ids') || '[]');
+      const reads = JSON.parse(localStorage.getItem('campusconnect.read_notif_ids') || '[]');
       if (!reads.includes(id)) {
         reads.push(id);
-        localStorage.setItem('sars.read_notif_ids', JSON.stringify(reads));
+        localStorage.setItem('campusconnect.read_notif_ids', JSON.stringify(reads));
         window.dispatchEvent(new Event('storage_read_notifs'));
       }
     } catch (e) {

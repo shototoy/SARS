@@ -1,33 +1,26 @@
-import { apiFetch } from './api';
-
-const API_BASE = import.meta.env.VITE_API_BASE || '';
-const UPLOAD_BASE = `${API_BASE}/uploads`;
-
+import { apiFetch, getApiBase } from './api';
 export function profileImgUrl(username) {
   if (!username) return '';
-  return `${UPLOAD_BASE}/profiles/${encodeURIComponent(username)}.png`;
+  return `${getApiBase()}/uploads/profiles/${encodeURIComponent(username)}.png`;
 }
-
 export function announcementImgUrl(title) {
   if (!title) return '';
-  return `${UPLOAD_BASE}/announcements/${encodeURIComponent(title)}.png`;
+  return `${getApiBase()}/uploads/announcements/${encodeURIComponent(title)}.png`;
 }
-
 export async function uploadAnnouncementPhoto(file, title) {
   const formData = new FormData();
   formData.append('announcement', file);
-  const targetUrl = `${API_BASE}/api/upload/announcement?title=${encodeURIComponent(title)}`;
+  const targetUrl = `${getApiBase()}/api/upload/announcement?title=${encodeURIComponent(title)}`;
   const res = await fetch(targetUrl, {
     method: 'POST',
     body: formData,
   });
   return await res.json();
 }
-
 export async function uploadDocumentFile(file, name) {
   const formData = new FormData();
   formData.append('document', file);
-  const url = name ? `${API_BASE}/api/upload/document?name=${encodeURIComponent(name)}` : `${API_BASE}/api/upload/document`;
+  const url = name ? `${getApiBase()}/api/upload/document?name=${encodeURIComponent(name)}` : `${getApiBase()}/api/upload/document`;
   const res = await fetch(url, {
     method: 'POST',
     body: formData,

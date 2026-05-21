@@ -1,4 +1,4 @@
-package com.sars.app;
+package com.campusconnect.app;
 
 import com.getcapacitor.BridgeActivity;
 

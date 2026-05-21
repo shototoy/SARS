@@ -1,8 +1,11 @@
-const API_BASE = import.meta.env.VITE_API_BASE || '';
-const API_URL = `${API_BASE}/api`;
-
+export function getApiBase() {
+  return localStorage.getItem('campusconnect_api_base') || import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:5001`;
+}
+export function setApiBase(url) {
+  localStorage.setItem('campusconnect_api_base', url.replace(/\/+$/, ''));
+}
 export async function apiFetch(endpoint, options = {}) {
-  const targetUrl = `${API_URL}${endpoint}`;
+  const targetUrl = `${getApiBase()}/api${endpoint}`;
   const res = await fetch(targetUrl, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...options.headers },

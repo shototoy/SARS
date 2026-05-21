@@ -26,10 +26,10 @@ export function ToastProvider({ children }) {
   const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
     try {
-      const reads = JSON.parse(localStorage.getItem('sars.read_notif_ids') || '[]');
+      const reads = JSON.parse(localStorage.getItem('campusconnect.read_notif_ids') || '[]');
       if (!reads.includes(id)) {
         reads.push(id);
-        localStorage.setItem('sars.read_notif_ids', JSON.stringify(reads));
+        localStorage.setItem('campusconnect.read_notif_ids', JSON.stringify(reads));
         window.dispatchEvent(new Event('storage_read_notifs'));
       }
     } catch (e) {
