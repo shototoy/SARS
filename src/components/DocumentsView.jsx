@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, FileText, Folder, Search, Filter, Plus, Trash2, X, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Upload, FilePlus } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import { getApiBase } from '../lib/api';
 
 export default function DocumentsView({ user, documents = [], onAdd, onDelete, courses = [] }) {
   const [search, setSearch] = useState('');
@@ -27,7 +28,7 @@ export default function DocumentsView({ user, documents = [], onAdd, onDelete, c
   }, {});
 
   const handleDownload = (doc) => {
-    const url = `http://127.0.0.1:5001/uploads/repository/${doc.name}`;
+    const url = `${getApiBase()}/uploads/repository/${encodeURIComponent(doc.name)}`;
     window.open(url, '_blank');
     setDownloadInfo(doc);
     setTimeout(() => setDownloadInfo(null), 3000);
