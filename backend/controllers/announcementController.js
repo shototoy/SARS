@@ -40,7 +40,7 @@ exports.getAnnouncements = async (req, res) => {
 };
 
 exports.addAnnouncement = async (req, res) => {
-  const { title, content, type, authorId, targetCourseId, attachmentUrl } = req.body;
+  const { title, content, type = 'Announcement', authorId, targetCourseId = null, attachmentUrl = null } = req.body;
   try {
     const [result] = await db.execute(
       'INSERT INTO announcements (title, content, type, author_id, target_course_id, attachment_url) VALUES (?, ?, ?, ?, ?, ?)',
