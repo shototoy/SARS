@@ -7,7 +7,7 @@ import Sidebar from './components/Sidebar';
 import { PlusCircle, Megaphone, UserPlus, Camera, X } from 'lucide-react';
 import { logout } from './lib/auth';
 import * as auth from './lib/auth';
-import { profileImgUrl } from './lib/db';
+import * as db from './lib/db';
 import AppBackground from './components/AppBackground';
 import AuthGate from './components/AuthGate';
 import backgroundUrl from './assets/background.png';
@@ -391,7 +391,7 @@ function App() {
               <div className="flex flex-col items-center gap-4">
                 <div className="relative group">
                   <div className="h-28 w-28 overflow-hidden rounded-[40px] border-4 border-gray-50 bg-gray-50 dark:border-gray-900 dark:bg-gray-900 shadow-inner">
-                    <img src={profileImgUrl(user?.username)} className="h-full w-full object-cover" onError={e => e.target.style.display = 'none'} />
+                    <img src={db.profileImgUrl(user?.username)} className="h-full w-full object-cover" onError={e => e.target.style.display = 'none'} />
                   </div>
                   <label className="absolute -bottom-2 -right-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl bg-white shadow-xl hover:bg-gray-50 dark:bg-gray-800 transition-all hover:scale-110 border border-gray-100 dark:border-gray-700">
                     <Camera size={18} className="text-brand" />

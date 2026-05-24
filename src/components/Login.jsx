@@ -18,7 +18,7 @@ export default function Login({ onAuthed, className = '' }) {
     try {
       const u = await login(v);
       onAuthed(u);
-    } catch (e) { setError(e?.message || 'Something went wrong.'); }
+    } catch (e) { setError(`${e?.message || 'Something went wrong.'} (Tried: ${getApiBase()}/api/login)`); }
   };
   const handleSaveSettings = () => {
     setApiBase(serverUrl);
@@ -85,6 +85,9 @@ export default function Login({ onAuthed, className = '' }) {
                 <LogIn size={18} /> Sign In
               </button>
             </form>
+            <div className="mt-4 text-center">
+              <p className="text-[10px] font-bold text-gray-400">Connected to: {getApiBase()}</p>
+            </div>
           </>
         )}
       </div>
